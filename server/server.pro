@@ -1,5 +1,9 @@
+include($$PWD/../mob.pri)
+
 TEMPLATE = app
-TARGET =
+TARGET = mobd
+DESTDIR = $$OUTPUT_DIR/bin
+
 DEPENDPATH += .
 INCLUDEPATH += .
 
