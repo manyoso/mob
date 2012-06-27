@@ -1,8 +1,10 @@
 #include <QtCore>
 
+#include "client.h"
+
 int main(int argc, char* argv[])
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-    qDebug() << "mob";
+    QCoreApplication app(argc, argv);
+    Client client;
+    return 0;
 }

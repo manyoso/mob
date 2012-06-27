@@ -2,6 +2,7 @@ OUTPUT_DIR = $$(OUTPUT_DIR)
 isEmpty(OUTPUT_DIR):OUTPUT_DIR=$$PWD/build
 
 QT += core
+QT -= gui
 
 CONFIG += qt warn_on
 
@@ -12,6 +13,3 @@ contains(DEBUG_MODE, 1) {
 
 OBJECTS_DIR = tmp
 MOC_DIR = tmp
-
-TOPLEVELDIR = $$PWD
-
