@@ -81,9 +81,10 @@ void Server::broadcast()
 
 void Server::handleMessage(Message* msg, const QHostAddress& address)
 {
+    Q_UNUSED(address);
+
     // The first message we receive will be an info message from the scheduler
-    if (!isScheduler() && msg->type() == Message::HostInfo) {
-        Q_ASSERT(m_broadcastTimer->isActive());
+    if (!isScheduler() && m_broadcastTimer->isActive() && msg->type() == Message::HostInfo) {
         m_broadcastTimer->stop();
         HostInfo* hostInfo = static_cast<HostInfo*>(msg);
         s_scheduler = new Node(hostInfo->address());

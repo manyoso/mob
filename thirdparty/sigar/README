@@ -1,0 +1,12 @@
+This is a copy of sigar from the public github site:
+
+    https://github.com/hyperic/sigar
+
+Specifically, the version used here is the SHA:
+
+    91aead2fd3c40ad95706dd65be013f5861645c21
+
+It has not been modified other than to remove OS versions
+which we do not wish to support and ported to the qmake
+build system.
+

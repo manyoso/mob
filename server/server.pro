@@ -12,3 +12,4 @@ INCLUDEPATH += .
 
 SOURCES += main.cpp server.cpp
 HEADERS += server.h
+LIBS += $$OUTPUT_DIR/lib/libsigar.a

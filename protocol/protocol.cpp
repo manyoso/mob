@@ -21,7 +21,9 @@ void Message::serialize(QDataStream& stream) const
 
 void Message::deserialize(QDataStream& stream)
 {
-    stream >> (int&)m_type;
+    int type;
+    stream >> type;
+    m_type = (Message::Type)type;
 }
 
 void HostInfo::serialize(QTextStream& stream) const
@@ -36,7 +38,7 @@ void HostInfo::serialize(QDataStream& stream) const
     stream << (int)m_address.toIPv4Address();
 }
 
-void HostInfo::deserialize(QDataStream& stream)\
+void HostInfo::deserialize(QDataStream& stream)
 {
     Message::deserialize(stream);
     int address;
