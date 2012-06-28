@@ -10,15 +10,18 @@ class QUdpSocket;
 class Server : public Node {
     Q_OBJECT
 public:
-    Server(const QNetworkAddressEntry& address, QObject* parent);
+    Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* parent);
 
     QNetworkAddressEntry networkAddress() const { return m_networkAddress; }
+
+    bool isScheduler() const { return m_isScheduler; }
 
 private slots:
     void broadcast();
     void processPendingDatagrams();
 
 private:
+    bool m_isScheduler;
     QNetworkAddressEntry m_networkAddress;
     QUdpSocket *m_udpSocket;
 };

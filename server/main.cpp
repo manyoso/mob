@@ -13,7 +13,7 @@ void usage(int exitCode = 0)
     space = space.fill(' ');
 
     QTextStream stream(stdout);
-    stream << usage << "[-s|--scheduler]\n";
+    stream << usage << "[-s|--scheduler] [-i|--iface=<name>]\n";
     stream << space << "[-h|--help] [-v|--version]\n";
     stream << "\n";
     stream << "Arguments:\n";
@@ -30,22 +30,35 @@ void version()
     exit(0);
 }
 
-QNetworkAddressEntry firstIpv4Address()
+QNetworkAddressEntry firstIPv4Address(const QNetworkInterface& iface)
 {
-    // Return the - first up and running, non-loopback - local address that
-    // supports the IPv4 protocol
+    if (!(iface.flags() & QNetworkInterface::IsUp))
+        return QNetworkAddressEntry();
+
+    if (!(iface.flags() & QNetworkInterface::IsRunning))
+        return QNetworkAddressEntry();
+
+    if (iface.flags() & QNetworkInterface::IsLoopBack)
+        return QNetworkAddressEntry();
+
+    QList<QNetworkAddressEntry> addresses = iface.addressEntries();
+    foreach (QNetworkAddressEntry address, addresses) {
+        if (address.ip().protocol() == QAbstractSocket::IPv4Protocol)
+            return address;
+    }
+    return QNetworkAddressEntry();
+}
+
+QNetworkAddressEntry firstIPv4Address(const QString& name)
+{
+    if (!name.isEmpty())
+        return firstIPv4Address(QNetworkInterface::interfaceFromName(name));
+
     QList<QNetworkInterface> ifaces = QNetworkInterface::allInterfaces();
     foreach (QNetworkInterface iface, ifaces) {
-        if (!(iface.flags() & QNetworkInterface::IsLoopBack)
-            && iface.flags() & QNetworkInterface::IsUp
-            && iface.flags() & QNetworkInterface::IsRunning) {
-
-            QList<QNetworkAddressEntry> addresses = iface.addressEntries();
-            foreach (QNetworkAddressEntry address, addresses) {
-                if (address.ip().protocol() == QAbstractSocket::IPv4Protocol)
-                    return address;
-            }
-        }
+        QNetworkAddressEntry address = firstIPv4Address(iface);
+        if (!address.ip().isNull())
+            return address;
     }
 
     return QNetworkAddressEntry();
@@ -60,10 +73,13 @@ int main(int argc, char* argv[])
     arguments.removeFirst(); // remove the app name
 
     bool scheduler = false;
+    QString iface;
 
     foreach(QString string, arguments) {
         if (string == QLatin1String("-s") || string == QLatin1String("--scheduler"))
             scheduler = true;
+        else if (string.startsWith("-i=") || string.startsWith("--iface="))
+            iface = string.mid(string.indexOf('=') + 1);
         else if (string == QLatin1String("-h") || string == QLatin1String("--help"))
             usage();
         else if (string == QLatin1String("-v") || string == QLatin1String("--version"))
@@ -72,12 +88,12 @@ int main(int argc, char* argv[])
             usage(1);
     }
 
-    QNetworkAddressEntry address = firstIpv4Address();
+    QNetworkAddressEntry address = firstIPv4Address(iface);
     if (address.ip().isNull()) {
         qDebug() << "ERROR: Could not find an up and running network interface that supports IPv4 on this machine!";
         exit(1);
     }
 
-    Server server(address, &app);
+    Server server(address, scheduler, &app);
     return app.exec();
 }
