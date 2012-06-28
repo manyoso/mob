@@ -4,6 +4,7 @@
 #include "node.h"
 #include "messagehandler.h"
 
+#include <QtCore/QTimer>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkAddressEntry>
 
@@ -20,6 +21,9 @@ public:
 
     QNetworkAddressEntry networkAddress() const { return m_networkAddress; }
 
+protected:
+    virtual void handleMessage(Message* message, const QHostAddress& address);
+
 private slots:
     void broadcast();
     void processPendingDatagrams();
@@ -28,6 +32,7 @@ private:
     QNetworkAddressEntry m_networkAddress;
     QUdpSocket* m_udpSocket;
     QHash<QHostAddress, Node*> m_nodes;
+    QTimer* m_broadcastTimer;
 };
 
 #endif // server_h

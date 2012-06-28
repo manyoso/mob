@@ -13,7 +13,7 @@ public:
         HostInfo
     };
 
-    Message(Type type) : m_type(type) {}
+    Message(Type type = Generic) : m_type(type) {}
     Type type() const { return m_type; }
 
 protected:

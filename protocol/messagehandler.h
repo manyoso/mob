@@ -4,28 +4,30 @@
 #include "protocol.h"
 
 #include <QtCore/QObject>
+#include <QtNetwork/QNetworkAddressEntry>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
-
-class Node;
 
 class MessageHandler : public QObject {
     Q_OBJECT
 public:
-    MessageHandler(quint16 port, QObject* parent);
+    MessageHandler(const QNetworkAddressEntry& address, quint16 port, QObject* parent);
 
     quint16 port() const { return m_port; }
 
-    bool sendMessage(const Message& message, Node* node);
+    bool sendMessage(const Message& msg, const QHostAddress& address);
+
+protected:
+    virtual void handleMessage(Message* msg, const QHostAddress& address) = 0;
 
 private slots:
     void handleNewConnection();
-    void readSocket();
     void socketError(QAbstractSocket::SocketError);
     void readConnectedSocket();
     void connectedSocketError(QAbstractSocket::SocketError);
 
 private:
+    QNetworkAddressEntry m_networkAddress;
     quint16 m_port;
     QTcpServer *m_tcpServer;
     QTcpSocket *m_tcpSocket;

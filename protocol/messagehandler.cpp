@@ -2,8 +2,11 @@
 
 #include "node.h"
 
-MessageHandler::MessageHandler(quint16 port, QObject* parent)
+#define DEBUG_MESSAGEHANDLER 0
+
+MessageHandler::MessageHandler(const QNetworkAddressEntry& address, quint16 port, QObject* parent)
     : QObject(parent)
+    , m_networkAddress(address)
     , m_port(port)
 {
     // Listens for new connections
@@ -16,29 +19,27 @@ MessageHandler::MessageHandler(quint16 port, QObject* parent)
 
     // Listens for and reads incoming messages and writes outgoing messages
     m_tcpSocket = new QTcpSocket(this);
-    connect(m_tcpSocket, SIGNAL(readyRead()), this, SLOT(readSocket()));
     connect(m_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)),
             this, SLOT(socketError(QAbstractSocket::SocketError)));
 }
 
-bool MessageHandler::sendMessage(const Message& message, Node* node)
+bool MessageHandler::sendMessage(const Message& msg, const QHostAddress& address)
 {
-    if (!node) {
-        qDebug() << "ERROR: Sending message because the node is null!";
-        return false;
-    }
+#if DEBUG_MESSAGEHANDLER
+    qDebug() << "Sending message" << msg << "to" << address << "on" << m_port;
+#endif
 
-    m_tcpSocket->connectToHost(node->address(), m_port, QIODevice::WriteOnly);
+    m_tcpSocket->connectToHost(address, m_port, QIODevice::WriteOnly);
     if (!m_tcpSocket->waitForConnected(1000)) {
         qDebug() << "ERROR: Sending message" << m_tcpSocket->error();
         return false;
     }
 
     QByteArray bytes;
-    QDataStream stream;
-    stream << message;
-    stream >> bytes;
-    if (m_tcpSocket->write(bytes) == -1) {
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream << msg;
+    int b = m_tcpSocket->write(bytes);
+    if (b == -1) {
         qDebug() << "ERROR: Sending message could not write the message to the socket!";
         return false;
     }
@@ -57,22 +58,30 @@ void MessageHandler::handleNewConnection()
             this, SLOT(connectedSocketError(QAbstractSocket::SocketError)));
 }
 
-void MessageHandler::readSocket()
-{
-    qDebug() << "MessageHandler::readSocket";
-}
-
 void MessageHandler::socketError(QAbstractSocket::SocketError error)
 {
-    qDebug() << "MessageHandler::socketError" << error;
+    qDebug() << "ERROR: socket error" << error;
 }
 
 void MessageHandler::readConnectedSocket()
 {
-    qDebug() << "MessageHandler::readConnectedSocket";
+    QTcpSocket* connectedSocket = qobject_cast<QTcpSocket*>(sender());
+    Message msg;
+    QDataStream stream(connectedSocket);
+    stream >> msg;
+
+#if DEBUG_MESSAGEHANDLER
+    qDebug() << "Receiving message" << msg << "from" << connectedSocket->peerAddress() << "on" << connectedSocket->peerPort();
+#endif
+
+    handleMessage(&msg, connectedSocket->peerAddress());
 }
 
 void MessageHandler::connectedSocketError(QAbstractSocket::SocketError error)
 {
-    qDebug() << "MessageHandler::connectedSocketError" << error;
+    // We expect the remote host to close this connection so ignore the error
+    if (error == QAbstractSocket::RemoteHostClosedError)
+        return;
+
+    qDebug() << "ERROR: connected socket error" << error;
 }

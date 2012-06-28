@@ -1,17 +1,17 @@
 #include "server.h"
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QTimer>
 #include <QtNetwork/QUdpSocket>
 
+#define DEBUG_SERVER 0
 #define _SCHEDULER_PORT_ 9876
 
 static Node* s_scheduler = 0;
 
 Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* parent)
-    : MessageHandler(_SCHEDULER_PORT_, parent)
+    : MessageHandler(address, _SCHEDULER_PORT_, parent)
     , Node(address.ip())
     , m_networkAddress(address)
+    , m_broadcastTimer(0)
 {
     m_udpSocket = new QUdpSocket(this);
 
@@ -21,18 +21,21 @@ Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* p
     }
 
     if (!isScheduler) {
-        s_scheduler = this;
-        QTimer *timer = new QTimer(this);
-        connect(timer, SIGNAL(timeout()), this, SLOT(broadcast()));
-        timer->start(5000);
+        m_broadcastTimer = new QTimer(this);
+        connect(m_broadcastTimer, SIGNAL(timeout()), this, SLOT(broadcast()));
+        m_broadcastTimer->start(5000);
         broadcast();
     } else {
+        s_scheduler = this;
         connect(m_udpSocket, SIGNAL(readyRead()), this, SLOT(processPendingDatagrams()));
     }
 }
 
 Server::~Server()
 {
+    delete s_scheduler;
+    s_scheduler = 0;
+
     qDeleteAll(m_nodes);
     m_nodes.clear();
 }
@@ -55,13 +58,14 @@ void Server::processPendingDatagrams()
         QByteArray datagram;
         datagram.resize(m_udpSocket->pendingDatagramSize());
         m_udpSocket->readDatagram(datagram.data(), datagram.size(), &peerAddress, &peerPort);
-        qDebug() << "Received datagram:" << datagram.data() << "from" << peerAddress << "on" << peerPort;
+#if DEBUG_SERVER
+        qDebug() << "Receiving connection request from" << peerAddress << "on" << peerPort;
+#endif
         if (!m_nodes.contains(peerAddress)) {
             // Establish a TCP connection and write to it saying that the scheduler sees you
             Node* node = new Node(peerAddress);
             m_nodes.insert(peerAddress, node);
-
-            sendMessage(HostInfo(address()), node);
+            sendMessage(HostInfo(address()), node->address());
         }
     }
 }
@@ -69,6 +73,22 @@ void Server::processPendingDatagrams()
 void Server::broadcast()
 {
     Q_ASSERT(!isScheduler());
-    qDebug() << "Broadcast datagram: on" << networkAddress().broadcast();
+#if DEBUG_SERVER
+    qDebug() << "Broadcasting to scheduler" << networkAddress().broadcast() << "on" << _SCHEDULER_PORT_;
+#endif
     m_udpSocket->writeDatagram(0, 0, networkAddress().broadcast(), _SCHEDULER_PORT_);
+}
+
+void Server::handleMessage(Message* msg, const QHostAddress& address)
+{
+    // The first message we receive will be an info message from the scheduler
+    if (!isScheduler() && msg->type() == Message::HostInfo) {
+        Q_ASSERT(m_broadcastTimer->isActive());
+        m_broadcastTimer->stop();
+        HostInfo* hostInfo = static_cast<HostInfo*>(msg);
+        s_scheduler = new Node(hostInfo->address());
+#if DEBUG_SERVER
+        qDebug() << "Found scheduler at" << hostInfo->address();
+#endif
+    }
 }
