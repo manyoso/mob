@@ -6,7 +6,7 @@
 #include <QtCore/QTextStream>
 #include <QtNetwork/QHostAddress>
 
-class Message : public QObject {
+class Message {
 public:
     enum Type {
         Generic = 0,

@@ -3,18 +3,14 @@
 
 #include "protocol.h"
 
-#include <QtCore/QObject>
+#include <QtNetwork/QHostAddress>
 
-class Node : public QObject {
-    Q_OBJECT
+class Node {
 public:
-    Node(const QHostAddress& address, QObject* parent);
+    Node(const QHostAddress& address);
 
     //! \brief Returns the host address of this node
     QHostAddress address() const { return m_address; }
-
-    //! \brief Dispatches the message to the host address represented by this node
-    void dispatchMessage(const Message&);
 
 private:
     QHostAddress m_address;
