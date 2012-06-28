@@ -13,12 +13,12 @@ Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* p
 {
     m_udpSocket = new QUdpSocket(this);
 
-    if (!m_udpSocket->bind(isScheduler ? address.ip() : QHostAddress::Any, _SCHEDULER_PORT_, QUdpSocket::DontShareAddress)) {
+    if (!m_udpSocket->bind(!isScheduler ? address.ip() : QHostAddress::Any, _SCHEDULER_PORT_, QUdpSocket::DontShareAddress)) {
         qDebug() << "ERROR: Could not exclusively bind to the port" << _SCHEDULER_PORT_ << "on this machine needed for scheduler!";
         exit(1);
     }
 
-    if (isScheduler) {
+    if (!isScheduler) {
         QTimer *timer = new QTimer(this);
         connect(timer, SIGNAL(timeout()), this, SLOT(broadcast()));
         timer->start(5000);
@@ -42,6 +42,7 @@ void Server::processPendingDatagrams()
 
 void Server::broadcast()
 {
-    Q_ASSERT(m_isScheduler);
+    Q_ASSERT(!m_isScheduler);
+    qDebug() << "Broadcast datagram: on" << networkAddress().broadcast();
     m_udpSocket->writeDatagram(0, 0, networkAddress().broadcast(), _SCHEDULER_PORT_);
 }
