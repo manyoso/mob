@@ -5,7 +5,17 @@
 #define DEBUG_SERVER 0
 #define _SCHEDULER_PORT_ 9876
 
+static Server* s_server = 0;
+Server* server()
+{
+    return s_server;
+}
+
 static Node* s_scheduler = 0;
+Node* scheduler()
+{
+    return s_scheduler;
+}
 
 Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* parent)
     : MessageHandler(address, _SCHEDULER_PORT_, parent)
@@ -13,6 +23,7 @@ Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* p
     , m_networkAddress(address)
     , m_broadcastTimer(0)
 {
+    s_server = this;
     m_udpSocket = new QUdpSocket(this);
 
     if (!m_udpSocket->bind(!isScheduler ? address.ip() : QHostAddress::Any, _SCHEDULER_PORT_, QUdpSocket::DontShareAddress)) {
@@ -33,21 +44,23 @@ Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* p
 
 Server::~Server()
 {
-    delete s_scheduler;
-    s_scheduler = 0;
+    if (!isScheduler()) {
+        delete s_scheduler;
+        s_scheduler = 0;
+    }
 
     qDeleteAll(m_nodes);
     m_nodes.clear();
 }
 
-Node* Server::scheduler() const
-{
-    return s_scheduler;
-}
-
 bool Server::isScheduler() const
 {
     return this == s_scheduler;
+}
+
+Node* Server::currentJob() const
+{
+    return m_nodes.values().first();
 }
 
 void Server::processPendingDatagrams()

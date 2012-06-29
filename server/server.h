@@ -10,6 +10,10 @@
 
 class QUdpSocket;
 
+class Server;
+extern Server* server();
+extern Node* scheduler();
+
 class Server : public MessageHandler, public Node {
     Q_OBJECT
 public:
@@ -17,7 +21,7 @@ public:
     virtual ~Server();
 
     bool isScheduler() const;
-    Node* scheduler() const;
+    Node* currentJob() const;
 
     QNetworkAddressEntry networkAddress() const { return m_networkAddress; }
 
