@@ -13,11 +13,14 @@ void usage(int exitCode = 0)
     space = space.fill(' ');
 
     QTextStream stream(stdout);
-    stream << usage << "[-s|--scheduler] [-i|--iface=<name>]\n";
-    stream << space << "[-h|--help] [-v|--version]\n";
+    stream << usage << "[-s|--scheduler] [--iface=<name>]\n";
+    stream << space << "[-h|--help] [--version]\n";
     stream << "\n";
     stream << "Arguments:\n";
-    stream << "\n";
+    stream << "   -s or --scheduler    Run the daemon as the scheduler for the network\n";
+    stream << "   --iface=<name>       Use the network interface <name> for all connections\n";
+    stream << "   -h or --help         Print help (this message) and exit\n";
+    stream << "   --version            Print version information and exit\n";
     stream.flush();
     exit(exitCode);
 }
@@ -78,11 +81,11 @@ int main(int argc, char* argv[])
     foreach(QString string, arguments) {
         if (string == QLatin1String("-s") || string == QLatin1String("--scheduler"))
             scheduler = true;
-        else if (string.startsWith("-i=") || string.startsWith("--iface="))
+        else if (string.startsWith("--iface="))
             iface = string.mid(string.indexOf('=') + 1);
         else if (string == QLatin1String("-h") || string == QLatin1String("--help"))
             usage();
-        else if (string == QLatin1String("-v") || string == QLatin1String("--version"))
+        else if (string == QLatin1String("--version"))
             version();
         else
             usage(1);
