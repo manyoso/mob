@@ -1,5 +1,8 @@
 #include "server.h"
 
+#include "filesystem.h"
+
+#include <QtCore/QCoreApplication>
 #include <QtNetwork/QUdpSocket>
 
 #define DEBUG_SERVER 0
@@ -19,11 +22,17 @@ Node* scheduler()
 
 Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* parent)
     : MessageHandler(address, _SCHEDULER_PORT_, parent)
-    , Node(address.ip())
+    , Node(true /*isLocal*/, address.ip())
     , m_networkAddress(address)
     , m_broadcastTimer(0)
 {
     s_server = this;
+
+    FileSystem* fileSystem = new FileSystem(this);
+    connect(fileSystem, SIGNAL(finished()), QCoreApplication::instance(), SLOT(quit()));
+    connect(fileSystem, SIGNAL(terminated()), QCoreApplication::instance(), SLOT(quit()));
+    fileSystem->start();
+
     m_udpSocket = new QUdpSocket(this);
 
     if (!m_udpSocket->bind(!isScheduler ? address.ip() : QHostAddress::Any, _SCHEDULER_PORT_, QUdpSocket::DontShareAddress)) {
@@ -60,6 +69,8 @@ bool Server::isScheduler() const
 
 Node* Server::currentJob() const
 {
+    if (m_nodes.isEmpty())
+        return 0;
     return m_nodes.values().first();
 }
 
@@ -76,7 +87,7 @@ void Server::processPendingDatagrams()
 #endif
         if (!m_nodes.contains(peerAddress)) {
             // Establish a TCP connection and write to it saying that the scheduler sees you
-            Node* node = new Node(peerAddress);
+            Node* node = new Node(false /*isLocal*/, peerAddress);
             m_nodes.insert(peerAddress, node);
             sendMessage(HostInfo(address()), node->address());
         }
@@ -100,7 +111,7 @@ void Server::handleMessage(Message* msg, const QHostAddress& address)
     if (!isScheduler() && m_broadcastTimer->isActive() && msg->type() == Message::HostInfo) {
         m_broadcastTimer->stop();
         HostInfo* hostInfo = static_cast<HostInfo*>(msg);
-        s_scheduler = new Node(hostInfo->address());
+        s_scheduler = new Node(false /*isLocal*/, hostInfo->address());
 #if DEBUG_SERVER
         qDebug() << "Found scheduler at" << hostInfo->address();
 #endif

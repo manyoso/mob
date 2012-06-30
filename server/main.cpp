@@ -70,6 +70,8 @@ QNetworkAddressEntry firstIPv4Address(const QString& name)
 int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
+    app.setApplicationName(_NAME_);
+    app.setApplicationVersion(_VERSION_);
 
     QStringList arguments = app.arguments();
     Q_ASSERT(!arguments.isEmpty());

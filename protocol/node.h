@@ -5,15 +5,22 @@
 
 #include <QtNetwork/QHostAddress>
 
+class FileOperations;
+
 class Node {
 public:
-    Node(const QHostAddress& address);
+    Node(bool isLocal, const QHostAddress& address);
+    ~Node();
 
     //! \brief Returns the host address of this node
     QHostAddress address() const { return m_address; }
 
+    //! \brief Returns the file operations of this node
+    FileOperations* fileOperations() const { return m_fileOps; }
+
 private:
     QHostAddress m_address;
+    FileOperations* m_fileOps;
 };
 
 #endif // node_h
