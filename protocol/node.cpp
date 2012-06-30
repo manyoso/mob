@@ -17,3 +17,8 @@ Node::~Node()
     delete m_fileOps;
     m_fileOps = 0;
 }
+
+bool Node::isScheduler() const
+{
+    return this == scheduler();
+}

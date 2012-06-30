@@ -62,11 +62,6 @@ Server::~Server()
     m_nodes.clear();
 }
 
-bool Server::isScheduler() const
-{
-    return this == s_scheduler;
-}
-
 Node* Server::currentJob() const
 {
     if (m_nodes.isEmpty())
@@ -89,7 +84,7 @@ void Server::processPendingDatagrams()
             // Establish a TCP connection and write to it saying that the scheduler sees you
             Node* node = new Node(false /*isLocal*/, peerAddress);
             m_nodes.insert(peerAddress, node);
-            sendMessage(HostInfo(address()), node->address());
+            sendMessage(NodeInfo(this), node->address());
         }
     }
 }
@@ -108,12 +103,13 @@ void Server::handleMessage(Message* msg, const QHostAddress& address)
     Q_UNUSED(address);
 
     // The first message we receive will be an info message from the scheduler
-    if (!isScheduler() && m_broadcastTimer->isActive() && msg->type() == Message::HostInfo) {
+    if (!isScheduler() && m_broadcastTimer->isActive() && msg->type() == Message::NodeInfo) {
         m_broadcastTimer->stop();
-        HostInfo* hostInfo = static_cast<HostInfo*>(msg);
-        s_scheduler = new Node(false /*isLocal*/, hostInfo->address());
+        NodeInfo* nodeInfo = static_cast<NodeInfo*>(msg);
+        Q_ASSERT(nodeInfo->isScheduler());
+        s_scheduler = new Node(false /*isLocal*/, nodeInfo->address());
 #if DEBUG_SERVER
-        qDebug() << "Found scheduler at" << hostInfo->address();
+        qDebug() << "Found scheduler at" << nodeInfo->address();
 #endif
     }
 }

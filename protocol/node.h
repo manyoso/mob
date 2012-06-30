@@ -7,10 +7,15 @@
 
 class FileOperations;
 
+extern Node* scheduler();
+
 class Node {
 public:
     Node(bool isLocal, const QHostAddress& address);
     ~Node();
+
+    //! \brief Returns whether this node is the scheduler
+    bool isScheduler() const;
 
     //! \brief Returns the host address of this node
     QHostAddress address() const { return m_address; }

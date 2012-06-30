@@ -10,7 +10,7 @@ class Message {
 public:
     enum Type {
         Generic = 0,
-        HostInfo
+        NodeInfo
     };
 
     Message(Type type = Generic) : m_type(type) {}
@@ -28,20 +28,22 @@ private:
     Type m_type;
 };
 
-class HostInfo : public Message {
+class Node;
+class NodeInfo : public Message {
 public:
-    HostInfo() : Message(Message::HostInfo) {}
-    HostInfo(const QHostAddress& address) : Message(Message::HostInfo), m_address(address) {}
-
+    NodeInfo(Node* node);
     QHostAddress address() const { return m_address; }
+    bool isScheduler() const { return m_isScheduler; }
 
 protected:
+    NodeInfo() : Message(Message::NodeInfo) {}
     virtual void serialize(QTextStream& stream) const;
     virtual void serialize(QDataStream& stream) const;
     virtual void deserialize(QDataStream& stream);
 
 private:
     QHostAddress m_address;
+    bool m_isScheduler;
 };
 
 QDataStream& operator<<(QDataStream&, const Message&);

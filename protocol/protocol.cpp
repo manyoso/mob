@@ -1,10 +1,12 @@
 #include "protocol.h"
 
+#include "node.h"
+
 QLatin1String messageTypeToString(Message::Type type)
 {
     switch (type) {
     case Message::Generic: return QLatin1String("Generic");
-    case Message::HostInfo: return QLatin1String("HostInfo");
+    case Message::NodeInfo: return QLatin1String("NodeInfo");
     default: return QLatin1String("");
     }
 }
@@ -26,24 +28,35 @@ void Message::deserialize(QDataStream& stream)
     m_type = (Message::Type)type;
 }
 
-void HostInfo::serialize(QTextStream& stream) const
+NodeInfo::NodeInfo(Node* node)
+    : Message(Message::NodeInfo)
+    , m_address(node->address())
+{
+}
+
+void NodeInfo::serialize(QTextStream& stream) const
 {
     Message::serialize(stream);
     stream << " Address=" << m_address.toIPv4Address();
+    stream << " Scheduler=" << (m_isScheduler ? "true" : "false");
 }
 
-void HostInfo::serialize(QDataStream& stream) const
+void NodeInfo::serialize(QDataStream& stream) const
 {
     Message::serialize(stream);
     stream << (int)m_address.toIPv4Address();
+    stream << m_isScheduler;
 }
 
-void HostInfo::deserialize(QDataStream& stream)
+void NodeInfo::deserialize(QDataStream& stream)
 {
     Message::deserialize(stream);
     int address;
     stream >> address;
     m_address = QHostAddress(address);
+    bool scheduler;
+    stream >> scheduler;
+    m_isScheduler = scheduler;
 }
 
 QDataStream& operator<<(QDataStream& stream, const Message& msg)
