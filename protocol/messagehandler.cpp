@@ -2,7 +2,9 @@
 
 #include "node.h"
 
+#include <QtCore/QCoreApplication>
 #define DEBUG_MESSAGEHANDLER 0
+
 
 MessageHandler::MessageHandler(const QNetworkAddressEntry& address, quint16 port, QObject* parent)
     : QObject(parent)
@@ -37,6 +39,7 @@ bool MessageHandler::sendMessage(const Message& msg, const QHostAddress& address
 
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream << (quint8)msg.type(); // Write the type which will be used to infer size as well
     stream << msg;
     int b = m_tcpSocket->write(bytes);
     if (b == -1) {
@@ -65,16 +68,40 @@ void MessageHandler::socketError(QAbstractSocket::SocketError error)
 
 void MessageHandler::readConnectedSocket()
 {
-    QTcpSocket* connectedSocket = qobject_cast<QTcpSocket*>(sender());
-    Message msg;
-    QDataStream stream(connectedSocket);
-    stream >> msg;
+    QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
 
+    quint8 type;
+    QDataStream stream(socket);
+    stream >> type;
+
+    switch ((Message::Type)type) {
+    case Message::Generic:
+        {
+            Message msg;
+            stream >> msg;
+            handleMessageInternal(&msg, socket);
+            break;
+        }
+    case Message::NodeInfo:
+        {
+            NodeInfo msg;
+            stream >> msg;
+            handleMessageInternal(&msg, socket);
+            break;
+        }
+    default:
+        qDebug() << "ERROR: unrecognized message sent" << type << "!";
+        QCoreApplication::exit(1);
+    }
+}
+
+void MessageHandler::handleMessageInternal(Message* msg, QTcpSocket* socket)
+{
 #if DEBUG_MESSAGEHANDLER
-    qDebug() << "Receiving message" << msg << "from" << connectedSocket->peerAddress() << "on" << connectedSocket->peerPort();
+    qDebug() << "Receiving message" << *msg << "from" << socket->peerAddress() << "on" << socket->peerPort();
 #endif
 
-    handleMessage(&msg, connectedSocket->peerAddress());
+    handleMessage(msg, socket->peerAddress());
 }
 
 void MessageHandler::connectedSocketError(QAbstractSocket::SocketError error)

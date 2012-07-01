@@ -24,6 +24,7 @@ private slots:
     void handleNewConnection();
     void socketError(QAbstractSocket::SocketError);
     void readConnectedSocket();
+    void handleMessageInternal(Message*, QTcpSocket*);
     void connectedSocketError(QAbstractSocket::SocketError);
 
 private:

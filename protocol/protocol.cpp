@@ -18,12 +18,12 @@ void Message::serialize(QTextStream& stream) const
 
 void Message::serialize(QDataStream& stream) const
 {
-    stream << (int)m_type;
+    stream << (quint8)m_type;
 }
 
 void Message::deserialize(QDataStream& stream)
 {
-    int type;
+    quint8 type;
     stream >> type;
     m_type = (Message::Type)type;
 }
@@ -44,14 +44,14 @@ void NodeInfo::serialize(QTextStream& stream) const
 void NodeInfo::serialize(QDataStream& stream) const
 {
     Message::serialize(stream);
-    stream << (int)m_address.toIPv4Address();
+    stream << (quint32)m_address.toIPv4Address();
     stream << m_isScheduler;
 }
 
 void NodeInfo::deserialize(QDataStream& stream)
 {
     Message::deserialize(stream);
-    int address;
+    quint32 address;
     stream >> address;
     m_address = QHostAddress(address);
     bool scheduler;
