@@ -1,6 +1,7 @@
 INCLUDEPATH += $$PWD
 
 SOURCES += \
+    $$PWD/global.cpp \
     $$PWD/localfile.cpp \
     $$PWD/protocol.cpp \
     $$PWD/messagehandler.cpp \
@@ -9,6 +10,7 @@ SOURCES += \
 
 HEADERS += \
     $$PWD/fileoperations.h \
+    $$PWD/global.h \
     $$PWD/localfile.h \
     $$PWD/protocol.h \
     $$PWD/messagehandler.h \

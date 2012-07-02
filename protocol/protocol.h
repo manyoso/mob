@@ -36,7 +36,7 @@ public:
     bool isScheduler() const { return m_isScheduler; }
 
 protected:
-    friend class MessageHandler;
+    friend class ConnectionThread;
     NodeInfo() : Message(Message::NodeInfo) {}
     virtual void serialize(QTextStream& stream) const;
     virtual void serialize(QDataStream& stream) const;

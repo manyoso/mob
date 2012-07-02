@@ -1,7 +1,13 @@
 #include <QtTest/QtTest>
 
+struct TestMessageHandlerPrivate;
 class TestMessageHandler: public QObject {
     Q_OBJECT
 private slots:
-    void toUpper();
+    void initTestCase();
+    void cleanupTestCase();
+
+    void sendMessage();
+private:
+    TestMessageHandlerPrivate* d;
 };

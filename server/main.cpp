@@ -1,6 +1,6 @@
 #include <QtCore>
-#include <QtNetwork/QNetworkInterface>
 
+#include "global.h"
 #include "server.h"
 
 #define _NAME_ "mobd"
@@ -33,40 +33,6 @@ void version()
     exit(0);
 }
 
-QNetworkAddressEntry firstIPv4Address(const QNetworkInterface& iface)
-{
-    if (!(iface.flags() & QNetworkInterface::IsUp))
-        return QNetworkAddressEntry();
-
-    if (!(iface.flags() & QNetworkInterface::IsRunning))
-        return QNetworkAddressEntry();
-
-    if (iface.flags() & QNetworkInterface::IsLoopBack)
-        return QNetworkAddressEntry();
-
-    QList<QNetworkAddressEntry> addresses = iface.addressEntries();
-    foreach (QNetworkAddressEntry address, addresses) {
-        if (address.ip().protocol() == QAbstractSocket::IPv4Protocol)
-            return address;
-    }
-    return QNetworkAddressEntry();
-}
-
-QNetworkAddressEntry firstIPv4Address(const QString& name)
-{
-    if (!name.isEmpty())
-        return firstIPv4Address(QNetworkInterface::interfaceFromName(name));
-
-    QList<QNetworkInterface> ifaces = QNetworkInterface::allInterfaces();
-    foreach (QNetworkInterface iface, ifaces) {
-        QNetworkAddressEntry address = firstIPv4Address(iface);
-        if (!address.ip().isNull())
-            return address;
-    }
-
-    return QNetworkAddressEntry();
-}
-
 int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
@@ -93,7 +59,7 @@ int main(int argc, char* argv[])
             usage(1);
     }
 
-    QNetworkAddressEntry address = firstIPv4Address(iface);
+    QNetworkAddressEntry address = Global::firstIPv4Address(iface);
     if (address.ip().isNull()) {
         qDebug() << "ERROR: Could not find an up and running network interface that supports IPv4 on this machine!";
         exit(1);

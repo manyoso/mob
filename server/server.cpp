@@ -1,6 +1,7 @@
 #include "server.h"
 
 #include "filesystem.h"
+#include "global.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtNetwork/QUdpSocket>
@@ -12,12 +13,6 @@ static Server* s_server = 0;
 Server* server()
 {
     return s_server;
-}
-
-static Node* s_scheduler = 0;
-Node* scheduler()
-{
-    return s_scheduler;
 }
 
 Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* parent)
@@ -46,18 +41,13 @@ Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* p
         m_broadcastTimer->start(5000);
         broadcast();
     } else {
-        s_scheduler = this;
+        Global::setScheduler(this);
         connect(m_udpSocket, SIGNAL(readyRead()), this, SLOT(processPendingDatagrams()));
     }
 }
 
 Server::~Server()
 {
-    if (!isScheduler()) {
-        delete s_scheduler;
-        s_scheduler = 0;
-    }
-
     qDeleteAll(m_nodes);
     m_nodes.clear();
 }
@@ -107,7 +97,7 @@ void Server::handleMessage(Message* msg, const QHostAddress& address)
         m_broadcastTimer->stop();
         NodeInfo* nodeInfo = static_cast<NodeInfo*>(msg);
         Q_ASSERT(nodeInfo->isScheduler());
-        s_scheduler = new Node(false /*isLocal*/, nodeInfo->address());
+        Global::setScheduler(new Node(false /*isLocal*/, nodeInfo->address()));
 #if DEBUG_SERVER
         qDebug() << "Found scheduler at" << nodeInfo->address();
 #endif

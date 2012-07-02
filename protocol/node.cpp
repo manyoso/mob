@@ -1,5 +1,6 @@
 #include "node.h"
 
+#include "global.h"
 #include "localfile.h"
 #include "remotefile.h"
 
@@ -20,5 +21,5 @@ Node::~Node()
 
 bool Node::isScheduler() const
 {
-    return this == scheduler();
+    return this == Global::scheduler();
 }

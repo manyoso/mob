@@ -7,8 +7,6 @@
 
 class FileOperations;
 
-extern Node* scheduler();
-
 class Node {
 public:
     Node(bool isLocal, const QHostAddress& address);
