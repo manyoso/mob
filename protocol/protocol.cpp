@@ -7,6 +7,7 @@ QLatin1String messageTypeToString(Message::Type type)
     switch (type) {
     case Message::Generic: return QLatin1String("Generic");
     case Message::NodeInfo: return QLatin1String("NodeInfo");
+    case Message::RawData: return QLatin1String("RawData");
     default: return QLatin1String("");
     }
 }
@@ -57,6 +58,30 @@ void NodeInfo::deserialize(QDataStream& stream)
     bool scheduler;
     stream >> scheduler;
     m_isScheduler = scheduler;
+}
+
+RawData::RawData(const QByteArray& data)
+    : Message(Message::RawData)
+    , m_data(data)
+{
+}
+
+void RawData::serialize(QTextStream& stream) const
+{
+    Message::serialize(stream);
+    stream << " DataSize=" << m_data.size();
+}
+
+void RawData::serialize(QDataStream& stream) const
+{
+    Message::serialize(stream);
+    stream << m_data;
+}
+
+void RawData::deserialize(QDataStream& stream)
+{
+    Message::deserialize(stream);
+    stream >> m_data;
 }
 
 QDataStream& operator<<(QDataStream& stream, const Message& msg)

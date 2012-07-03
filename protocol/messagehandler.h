@@ -29,7 +29,7 @@ public:
     quint16 readPort() const { return m_readPort; }
     quint16 writePort() const { return m_writePort; }
 
-    bool sendMessage(const Message& msg, const QHostAddress& address);
+    bool sendMessage(const Message& msg, const QHostAddress& address, bool sync = false);
     void expectMessage(const QHostAddress& address);
     bool waitForMessage();
 
@@ -54,9 +54,13 @@ private:
     quint16 m_writePort;
     QTcpSocket *m_tcpSocket;
 
-    QHostAddress m_waitingForMessage;
-    QMutex m_waitMutex;
-    QWaitCondition m_waitCondition;
+    bool m_connectWait;
+    QMutex m_connectWaitMutex;
+    QWaitCondition m_connectWaitCondition;
+
+    QHostAddress m_messageWait;
+    QMutex m_messageWaitMutex;
+    QWaitCondition m_messageWaitCondition;
 };
 
 #endif // messagehandler_h

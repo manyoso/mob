@@ -8,6 +8,8 @@ private slots:
     void cleanupTestCase();
 
     void sendMessage();
+    void sendLargeMessage();
+
 private:
     TestMessageHandlerPrivate* d;
 };

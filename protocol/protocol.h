@@ -10,7 +10,8 @@ class Message {
 public:
     enum Type {
         Generic = 0,
-        NodeInfo
+        NodeInfo,
+        RawData
     };
 
     Message(Type type = Generic) : m_type(type) {}
@@ -45,6 +46,22 @@ protected:
 private:
     QHostAddress m_address;
     bool m_isScheduler;
+};
+
+class RawData : public Message {
+public:
+    RawData(const QByteArray& data);
+    const QByteArray& address() const { return m_data; }
+
+protected:
+    friend class ConnectionThread;
+    RawData() : Message(Message::RawData) {}
+    virtual void serialize(QTextStream& stream) const;
+    virtual void serialize(QDataStream& stream) const;
+    virtual void deserialize(QDataStream& stream);
+
+private:
+    QByteArray m_data;
 };
 
 QDataStream& operator<<(QDataStream&, const Message&);

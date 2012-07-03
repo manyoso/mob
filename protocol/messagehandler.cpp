@@ -94,6 +94,13 @@ void ConnectionThread::readSocket(QTcpSocket* socket)
             handler->handleMessageInternal(&msg, socket);
             break;
         }
+    case Message::RawData:
+        {
+            RawData msg;
+            stream >> msg;
+            handler->handleMessageInternal(&msg, socket);
+            break;
+        }
     default:
         qDebug() << "ERROR: unrecognized message sent" << type << "!";
         QCoreApplication::exit(1);
@@ -144,7 +151,7 @@ bool MessageHandler::isRunning() const
     return isListening();
 }
 
-bool MessageHandler::sendMessage(const Message& msg, const QHostAddress& address)
+bool MessageHandler::sendMessage(const Message& msg, const QHostAddress& address, bool sync)
 {
     if (!isRunning()) {
         qDebug() << "ERROR: Cannot send a message because the TCP server is not running!";
@@ -172,7 +179,8 @@ bool MessageHandler::sendMessage(const Message& msg, const QHostAddress& address
     }
 
     m_tcpSocket->disconnectFromHost();
-    m_tcpSocket->waitForDisconnected();
+    if (sync)
+        m_tcpSocket->waitForDisconnected(-1);
     return true;
 }
 
@@ -183,8 +191,15 @@ void MessageHandler::expectMessage(const QHostAddress& address)
         return;
     }
 
-    QMutexLocker locker(&m_waitMutex);
-    m_waitingForMessage = address;
+    {
+        QMutexLocker locker(&m_connectWaitMutex);
+        m_connectWait = true;
+    }
+
+    {
+        QMutexLocker locker(&m_messageWaitMutex);
+        m_messageWait = address;
+    }
 }
 
 bool MessageHandler::waitForMessage()
@@ -194,13 +209,17 @@ bool MessageHandler::waitForMessage()
         return false;
     }
 
-    waitForNewConnection(-1, 0);
+    {
+        QMutexLocker locker(&m_connectWaitMutex);
+        if (m_connectWait)
+            m_connectWaitCondition.wait(&m_connectWaitMutex);
+    }
 
-    QMutexLocker locker(&m_waitMutex);
-    if (m_waitingForMessage.isNull())
-        return true;
-
-    m_waitCondition.wait(&m_waitMutex);
+    {
+        QMutexLocker locker(&m_messageWaitMutex);
+        if (!m_messageWait.isNull())
+            m_messageWaitCondition.wait(&m_messageWaitMutex);
+    }
     return true;
 }
 
@@ -225,6 +244,12 @@ void MessageHandler::incomingConnection(int socketDescriptor)
     connect(thread, SIGNAL(socketError(QAbstractSocket::SocketError)),
             this, SLOT(connectedSocketError(QAbstractSocket::SocketError)));
     thread->start();
+
+    QMutexLocker locker(&m_connectWaitMutex);
+    if (m_connectWait) {
+        m_connectWait = false;
+        m_connectWaitCondition.wakeAll();
+    }
 }
 
 void MessageHandler::handleMessageInternal(Message* msg, QTcpSocket* socket)
@@ -235,10 +260,10 @@ void MessageHandler::handleMessageInternal(Message* msg, QTcpSocket* socket)
 
     handleMessage(msg, socket->peerAddress());
 
-    QMutexLocker locker(&m_waitMutex);
-    if (!m_waitingForMessage.isNull() && socket->peerAddress() == m_waitingForMessage) {
-        m_waitingForMessage = QHostAddress();
-        m_waitCondition.wakeAll();
+    QMutexLocker locker(&m_messageWaitMutex);
+    if (!m_messageWait.isNull() && socket->peerAddress() == m_messageWait) {
+        m_messageWait = QHostAddress();
+        m_messageWaitCondition.wakeAll();
     }
 }
 
