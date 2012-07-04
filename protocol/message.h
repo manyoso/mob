@@ -3,10 +3,21 @@
 
 #include <QtCore/QDataStream>
 #include <QtCore/QDebug>
+#include <QtCore/QObject>
 #include <QtCore/QTextStream>
 #include <QtNetwork/QHostAddress>
 
-class Message {
+/*!
+ * \brief This is the base class for all messages.
+ * All methods marked with Q_PROPERTY will be automatically serialized/deserialized.
+ * For properties that should be serialized/deserialized directly from a QIODevice
+ * rather than from a QDataStream you can mark them with 'STORAGE false' and
+ * re-implement the virual serialize and deserialize functions to read from and
+ * write to the QIODevice directly.
+ */
+class Message : public QObject {
+    Q_OBJECT
+    Q_ENUMS(Type)
 public:
     enum Type {
         Generic = 0,
@@ -19,48 +30,48 @@ public:
     Message(Type type = Generic) : m_type(type) {}
     Type type() const { return m_type; }
 
+    virtual bool serialize(QIODevice* device);
+    virtual bool deserialize(QIODevice* device);
+
 protected:
     friend QDataStream& operator<<(QDataStream&, const Message&);
     friend QDataStream& operator>>(QDataStream&, Message&);
     friend QDebug operator<<(QDebug, const Message&);
-    virtual void serialize(QTextStream& stream) const;
-    virtual void serialize(QDataStream& stream) const;
-    virtual void deserialize(QDataStream& stream);
+    void serialize(QTextStream& stream) const;
+    void serialize(QDataStream& stream) const;
+    void deserialize(QDataStream& stream);
 
 private:
     Type m_type;
 };
 
-class Node;
 class NodeInfo : public Message {
+    Q_OBJECT
+    Q_PROPERTY(QHostAddress address READ address WRITE setAddress)
+    Q_PROPERTY(bool scheduler READ scheduler WRITE setScheduler)
 public:
-    NodeInfo(Node* node);
+    NodeInfo() : Message(Message::NodeInfo), m_scheduler(false) {}
     QHostAddress address() const { return m_address; }
-    bool isScheduler() const { return m_isScheduler; }
+    void setAddress(const QHostAddress& address) { m_address = address; }
 
-protected:
-    friend class Message;
-    NodeInfo() : Message(Message::NodeInfo) {}
-    virtual void serialize(QTextStream& stream) const;
-    virtual void serialize(QDataStream& stream) const;
-    virtual void deserialize(QDataStream& stream);
+    bool scheduler() const { return m_scheduler; }
+    void setScheduler(bool scheduler) { m_scheduler = scheduler; }
 
 private:
     QHostAddress m_address;
-    bool m_isScheduler;
+    bool m_scheduler;
 };
 
 class RawData : public Message {
+    Q_OBJECT
+    Q_PROPERTY(QByteArray data READ data WRITE setData STORED false)
 public:
-    RawData(const QByteArray& data);
-    const QByteArray& data() const { return m_data; }
-
-protected:
-    friend class Message;
     RawData() : Message(Message::RawData) {}
-    virtual void serialize(QTextStream& stream) const;
-    virtual void serialize(QDataStream& stream) const;
-    virtual void deserialize(QDataStream& stream);
+    const QByteArray& data() const { return m_data; }
+    void setData(const QByteArray& data) { m_data = data; }
+
+    virtual bool serialize(QIODevice* device);
+    virtual bool deserialize(QIODevice* device);
 
 private:
     QByteArray m_data;

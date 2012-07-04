@@ -11,7 +11,7 @@ public:
     ~Node();
 
     //! \brief Returns whether this node is the scheduler
-    bool isScheduler() const;
+    bool scheduler() const;
 
     //! \brief Returns the host address of this node
     QHostAddress address() const { return m_address; }

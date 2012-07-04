@@ -26,10 +26,10 @@ public:
         }
     }
 
-    bool sendMessage(const Message& msg)
+    bool sendMessage(Message* msg)
     {
         bool r;
-        QMetaObject::invokeMethod(this, "sendMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r), Q_ARG(Message, msg));
+        QMetaObject::invokeMethod(this, "sendMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r), Q_ARG(Message*, msg));
         return r;
     }
 
@@ -46,7 +46,7 @@ public:
     }
 
 private slots:
-    bool sendMessageInternal(const Message& msg)
+    bool sendMessageInternal(Message* msg)
     {
         return MessageHandler::sendMessage(msg, QHostAddress::LocalHost, false);
     }
@@ -93,7 +93,7 @@ void TestMessageHandler::sendMessage()
     peer2.expectMessage();
 
     Message msg;
-    QVERIFY(peer1.sendMessage(msg) == true);
+    QVERIFY(peer1.sendMessage(&msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
 }
 
@@ -106,8 +106,9 @@ void TestMessageHandler::sendLargeMessage()
 
     QByteArray data;
     data.fill('X', 1024 * 1024);
-    RawData msg(data);
-    QVERIFY(peer1.sendMessage(msg) == true);
+    RawData msg;
+    msg.setData(data);
+    QVERIFY(peer1.sendMessage(&msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
 }
 

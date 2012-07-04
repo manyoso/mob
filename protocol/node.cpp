@@ -19,7 +19,7 @@ Node::~Node()
     m_fileOps = 0;
 }
 
-bool Node::isScheduler() const
+bool Node::scheduler() const
 {
     return this == Global::scheduler();
 }

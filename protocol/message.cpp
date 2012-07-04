@@ -1,16 +1,6 @@
 #include "message.h"
 
-#include "node.h"
-
-QLatin1String messageTypeToString(Message::Type type)
-{
-    switch (type) {
-    case Message::Generic: return QLatin1String("Generic");
-    case Message::NodeInfo: return QLatin1String("NodeInfo");
-    case Message::RawData: return QLatin1String("RawData");
-    default: return QLatin1String("");
-    }
-}
+#include <QMetaProperty>
 
 Message* Message::createMessage(Message::Type type)
 {
@@ -29,12 +19,37 @@ Message* Message::createMessage(Message::Type type)
 
 void Message::serialize(QTextStream& stream) const
 {
-    stream << "Type=" << messageTypeToString(m_type);
+    const QMetaObject* object = metaObject();
+    stream << object->className() << "(";
+    for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
+        if (i != object->propertyOffset())
+            stream << ", ";
+        QMetaProperty property = object->property(i);
+        QString name = property.name();
+        name.replace(0, 1, name.at(0).toUpper());
+        stream << name;
+        stream << ":";
+        QString value = property.read(this).toString();
+        if (value.length() > 10) {
+            value.truncate(10);
+            value.append("...");
+        }
+        if (value.isEmpty())
+            value = "0";
+        stream << value;
+    }
+    stream << ")";
 }
 
 void Message::serialize(QDataStream& stream) const
 {
     stream << (quint8)m_type;
+    const QMetaObject* object = metaObject();
+    for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
+        QMetaProperty property = object->property(i);
+        if (property.isStored(this))
+            stream << property.read(this);
+    }
 }
 
 void Message::deserialize(QDataStream& stream)
@@ -42,61 +57,53 @@ void Message::deserialize(QDataStream& stream)
     quint8 type;
     stream >> type;
     m_type = (Message::Type)type;
+    const QMetaObject* object = metaObject();
+    for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
+        QMetaProperty property = object->property(i);
+        if (property.isStored(this))
+            property.write(this, stream);
+    }
 }
 
-NodeInfo::NodeInfo(Node* node)
-    : Message(Message::NodeInfo)
-    , m_address(node->address())
+bool Message::serialize(QIODevice*)
 {
+    // no-op
+    return true;
 }
 
-void NodeInfo::serialize(QTextStream& stream) const
+bool Message::deserialize(QIODevice*)
 {
-    Message::serialize(stream);
-    stream << " Address=" << m_address.toIPv4Address();
-    stream << " Scheduler=" << (m_isScheduler ? "true" : "false");
+    // no-op
+    return true;
 }
 
-void NodeInfo::serialize(QDataStream& stream) const
+bool RawData::serialize(QIODevice* device)
 {
-    Message::serialize(stream);
-    stream << (quint32)m_address.toIPv4Address();
-    stream << m_isScheduler;
+    quint32 size = m_data.size();
+    if (device->write(reinterpret_cast<char*>(&size), sizeof(quint32)) == -1)
+        return false;
+
+    if (device->write(m_data) == -1)
+        return false;
+
+    return true;
 }
 
-void NodeInfo::deserialize(QDataStream& stream)
+bool RawData::deserialize(QIODevice* device)
 {
-    Message::deserialize(stream);
-    quint32 address;
-    stream >> address;
-    m_address = QHostAddress(address);
-    bool scheduler;
-    stream >> scheduler;
-    m_isScheduler = scheduler;
-}
+    while(device->bytesAvailable() < 4)
+        device->waitForReadyRead(-1);
 
-RawData::RawData(const QByteArray& data)
-    : Message(Message::RawData)
-    , m_data(data)
-{
-}
+    quint32 size = 0;
+    if (device->read(reinterpret_cast<char*>(&size), sizeof(quint32)) < 4)
+        return false;
 
-void RawData::serialize(QTextStream& stream) const
-{
-    Message::serialize(stream);
-    stream << " DataSize=" << m_data.size();
-}
+    while (quint32(m_data.size()) < size) {
+        m_data.append(device->readAll());
+        device->waitForReadyRead(-1);
+    }
 
-void RawData::serialize(QDataStream& stream) const
-{
-    Message::serialize(stream);
-    stream << m_data;
-}
-
-void RawData::deserialize(QDataStream& stream)
-{
-    Message::deserialize(stream);
-    stream >> m_data;
+    return true;
 }
 
 QDataStream& operator<<(QDataStream& stream, const Message& msg)
@@ -116,7 +123,7 @@ QDebug operator<<(QDebug d, const Message &msg)
     QString data;
     QTextStream stream(&data);
     msg.serialize(stream);
-    d.nospace() << "Message(" << data << ")";
+    d.nospace() << data;
     return d.space();
 }
 

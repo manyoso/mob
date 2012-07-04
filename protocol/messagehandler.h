@@ -29,7 +29,7 @@ public:
     quint16 readPort() const { return m_readPort; }
     quint16 writePort() const { return m_writePort; }
 
-    bool sendMessage(const Message& msg, const QHostAddress& address, bool sync = false);
+    bool sendMessage(Message* msg, const QHostAddress& address, bool sync = false);
     void expectMessage(const QHostAddress& address);
     bool waitForMessage();
 
@@ -47,7 +47,7 @@ private slots:
 private:
     void init();
     friend class ConnectionThread;
-    void handleMessageInternal(Message*, QTcpSocket*);
+    void handleMessageInternal(Message*, const QHostAddress& address, quint16 port);
 
     QNetworkAddressEntry m_networkAddress;
     quint16 m_readPort;

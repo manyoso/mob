@@ -74,14 +74,17 @@ void Server::processPendingDatagrams()
             // Establish a TCP connection and write to it saying that the scheduler sees you
             Node* node = new Node(false /*isLocal*/, peerAddress);
             m_nodes.insert(peerAddress, node);
-            sendMessage(NodeInfo(this), node->address());
+            NodeInfo info;
+            info.setAddress(address());
+            info.setScheduler(scheduler());
+            sendMessage(&info, node->address());
         }
     }
 }
 
 void Server::broadcast()
 {
-    Q_ASSERT(!isScheduler());
+    Q_ASSERT(!scheduler());
 #if DEBUG_SERVER
     qDebug() << "Broadcasting to scheduler" << networkAddress().broadcast() << "on" << _SCHEDULER_PORT_;
 #endif
@@ -93,10 +96,10 @@ void Server::handleMessage(Message* msg, const QHostAddress& address)
     Q_UNUSED(address);
 
     // The first message we receive will be an info message from the scheduler
-    if (!isScheduler() && m_broadcastTimer->isActive() && msg->type() == Message::NodeInfo) {
+    if (!scheduler() && m_broadcastTimer->isActive() && msg->type() == Message::NodeInfo) {
         m_broadcastTimer->stop();
         NodeInfo* nodeInfo = static_cast<NodeInfo*>(msg);
-        Q_ASSERT(nodeInfo->isScheduler());
+        Q_ASSERT(nodeInfo->scheduler());
         Global::setScheduler(new Node(false /*isLocal*/, nodeInfo->address()));
 #if DEBUG_SERVER
         qDebug() << "Found scheduler at" << nodeInfo->address();

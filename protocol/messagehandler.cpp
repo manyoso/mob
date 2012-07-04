@@ -21,27 +21,27 @@ protected:
     virtual void run();
 
 private:
-    void readSocketIntoBuffer(QTcpSocket* socket);
     void readSocket(QTcpSocket* socket);
     int m_socketDescriptor;
-    QByteArray m_buffer;
-    quint32 m_waitingForBytes;
-    quint32 m_sizeOfMessage;
+    bool m_firstRead;
     quint8 m_typeOfMessage;
+    quint32 m_sizeOfMessage;
+    QHostAddress m_address;
+    quint16 m_port;
 };
 
 ConnectionThread::ConnectionThread(int socketDescriptor, MessageHandler* parent)
     : QThread(parent)
     , m_socketDescriptor(socketDescriptor)
-    , m_waitingForBytes(0)
-    , m_sizeOfMessage(0)
+    , m_firstRead(true)
     , m_typeOfMessage(0)
+    , m_sizeOfMessage(0)
+    , m_port(0)
 {
 }
 
 ConnectionThread::~ConnectionThread()
 {
-    Q_ASSERT(m_buffer.isEmpty());
     if (!wait(1000)) {
         terminate();
         wait();
@@ -62,13 +62,19 @@ void ConnectionThread::run()
         return;
     }
 
+    m_address = tcpSocket.peerAddress();
+    m_port = tcpSocket.peerPort();
+
 #if DEBUG_MESSAGEHANDLER
-    qDebug() << "Starting new connection thread with" << tcpSocket.peerAddress() << "on" << tcpSocket.peerPort();
+    qDebug() << "Starting new connection thread with" << m_address << "on" << m_port;
 #endif
 
     while (tcpSocket.state() == QAbstractSocket::ConnectedState) {
-        if (tcpSocket.bytesAvailable())
+        // Need at least 5 bytes to begin reading the message
+        if (tcpSocket.bytesAvailable() >= (m_firstRead ? 5 : m_sizeOfMessage)) {
             readSocket(&tcpSocket);
+            m_firstRead = false;
+        }
 #if DEBUG_MESSAGEHANDLER
         qDebug() << "Waiting for socket read in state" << tcpSocket.state();
 #endif
@@ -76,56 +82,45 @@ void ConnectionThread::run()
     }
 }
 
-void ConnectionThread::readSocketIntoBuffer(QTcpSocket* socket)
-{
-#if DEBUG_MESSAGEHANDLER
-    qDebug() << "Reading socket with" << socket->bytesAvailable() << "bytesAvailable";
-#endif
-
-    m_buffer += socket->readAll();
-}
-
 void ConnectionThread::readSocket(QTcpSocket* socket)
 {
-    if (!m_sizeOfMessage) {
-        socket->read(reinterpret_cast<char*>(&m_sizeOfMessage), sizeof(quint32));
-#if DEBUG_MESSAGEHANDLER
-        qDebug() << "Reading size" << m_sizeOfMessage << "from socket with" << socket->bytesAvailable() << "bytesAvailable";
-#endif
-        m_waitingForBytes = m_sizeOfMessage;
-    }
-
-    if (!m_typeOfMessage) {
+    if (m_firstRead) {
         socket->read(reinterpret_cast<char*>(&m_typeOfMessage), sizeof(quint8));
 #if DEBUG_MESSAGEHANDLER
         qDebug() << "Reading type" << m_typeOfMessage << "from socket with" << socket->bytesAvailable() << "bytesAvailable";
 #endif
+
+        socket->read(reinterpret_cast<char*>(&m_sizeOfMessage), sizeof(quint32));
+#if DEBUG_MESSAGEHANDLER
+        qDebug() << "Reading size" << m_sizeOfMessage << "from socket with" << socket->bytesAvailable() << "bytesAvailable";
+#endif
     }
 
-    readSocketIntoBuffer(socket);
-
-    if (quint32(m_buffer.size()) < m_waitingForBytes) { // wait for some more...
- #if DEBUG_MESSAGEHANDLER
-        qDebug() << "Waiting for more bytes because" << m_buffer.size() << "<" << m_waitingForBytes;
+    if (socket->bytesAvailable() < m_sizeOfMessage) {
+#if DEBUG_MESSAGEHANDLER
+        qDebug() << "Waiting for more bytes because" << socket->bytesAvailable() << "<" << m_sizeOfMessage;
 #endif
         return;
     }
 
 #if DEBUG_MESSAGEHANDLER
-    qDebug() << "Reading message from buffer of size" << m_buffer.size();
+    qDebug() << "Reading message from socket of size" << socket->bytesAvailable();
 #endif
 
     MessageHandler* handler = qobject_cast<MessageHandler*>(parent());
     Message* msg = Message::createMessage(Message::Type(m_typeOfMessage));
     if (!msg) {
-        qDebug() << "ERROR: unrecognized message type" << m_typeOfMessage << "!";
+        qDebug() << "ERROR: Unrecognized message type" << m_typeOfMessage << "!";
         QCoreApplication::exit(1);
     }
 
-    QDataStream stream(m_buffer);
+    QDataStream stream(socket);
     stream >> *msg;
-    m_buffer.clear();
-    handler->handleMessageInternal(msg, socket);
+
+    if (!msg->deserialize(socket))
+        qDebug() << "ERROR: Receiving message could not deserialize the message directly from the socket!";
+
+    handler->handleMessageInternal(msg, m_address, m_port);
     delete msg;
 }
 
@@ -173,7 +168,7 @@ bool MessageHandler::isRunning() const
     return isListening();
 }
 
-bool MessageHandler::sendMessage(const Message& msg, const QHostAddress& address, bool sync)
+bool MessageHandler::sendMessage(Message* msg, const QHostAddress& address, bool sync)
 {
     if (!isRunning()) {
         qDebug() << "ERROR: Cannot send a message because the TCP server is not running!";
@@ -181,7 +176,7 @@ bool MessageHandler::sendMessage(const Message& msg, const QHostAddress& address
     }
 
 #if DEBUG_MESSAGEHANDLER
-    qDebug() << "Sending message" << msg << "to" << address << "on" << m_writePort;
+    qDebug() << "Sending message" << *msg << "to" << address << "on" << m_writePort;
 #endif
 
     m_tcpSocket->connectToHost(address, m_writePort, QIODevice::WriteOnly);
@@ -192,25 +187,21 @@ bool MessageHandler::sendMessage(const Message& msg, const QHostAddress& address
 
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
-    stream << msg;
+    stream << *msg;
+
+    quint8 type = msg->type();
+    if (m_tcpSocket->write(reinterpret_cast<char*>(&type), sizeof(quint8)) == -1)
+        qDebug() << "ERROR: Sending message could not write the type of the message to the socket!";
 
     quint32 size = bytes.size();
-    quint8 type = msg.type();
-
-    if (m_tcpSocket->write(reinterpret_cast<char*>(&size), sizeof(quint32)) == -1) {
-        qDebug() << "ERROR: Sending message could not write the size of the data to the socket!";
-        return false;
-    }
-
-    if (m_tcpSocket->write(reinterpret_cast<char*>(&type), sizeof(quint8)) == -1) {
+    if (m_tcpSocket->write(reinterpret_cast<char*>(&size), sizeof(quint32)) == -1)
         qDebug() << "ERROR: Sending message could not write the size of the message to the socket!";
-        return false;
-    }
 
-    if (m_tcpSocket->write(bytes) == -1) {
+    if (m_tcpSocket->write(bytes) == -1)
         qDebug() << "ERROR: Sending message could not write the message to the socket!";
-        return false;
-    }
+
+    if (!msg->serialize(m_tcpSocket))
+        qDebug() << "ERROR: Sending message could not serialize the message directly to the socket!";
 
     m_tcpSocket->disconnectFromHost();
     if (sync)
@@ -286,16 +277,18 @@ void MessageHandler::incomingConnection(int socketDescriptor)
     }
 }
 
-void MessageHandler::handleMessageInternal(Message* msg, QTcpSocket* socket)
+void MessageHandler::handleMessageInternal(Message* msg,  const QHostAddress& address, quint16 port)
 {
 #if DEBUG_MESSAGEHANDLER
-    qDebug() << "Receiving message" << *msg << "from" << socket->peerAddress() << "on" << socket->peerPort();
+    qDebug() << "Receiving message" << *msg << "from" << address << "on" << port;
+#else
+    Q_UNUSED(port);
 #endif
 
-    handleMessage(msg, socket->peerAddress());
+    handleMessage(msg, address);
 
     QMutexLocker locker(&m_messageWaitMutex);
-    if (!m_messageWait.isNull() && socket->peerAddress() == m_messageWait) {
+    if (!m_messageWait.isNull() && address == m_messageWait) {
         m_messageWait = QHostAddress();
         m_messageWaitCondition.wakeAll();
     }
