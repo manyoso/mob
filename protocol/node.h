@@ -1,8 +1,6 @@
 #ifndef node_h
 #define node_h
 
-#include "protocol.h"
-
 #include <QtNetwork/QHostAddress>
 
 class FileOperations;

@@ -1,5 +1,5 @@
-#ifndef protocol_h
-#define protocol_h
+#ifndef message_h
+#define message_h
 
 #include <QtCore/QDataStream>
 #include <QtCore/QDebug>
@@ -70,4 +70,4 @@ QDataStream& operator<<(QDataStream&, const Message&);
 QDataStream& operator>>(QDataStream&, Message&);
 QDebug operator<<(QDebug, const Message &);
 
-#endif // protocol_h
+#endif // message_h

@@ -1,7 +1,7 @@
 #ifndef messagehandler_h
 #define messagehandler_h
 
-#include "protocol.h"
+#include "message.h"
 
 #include <QtCore/QHash>
 #include <QtCore/QMutex>

@@ -3,8 +3,8 @@
 #include <QtCore/QThread>
 
 #include "global.h"
+#include "message.h"
 #include "messagehandler.h"
-#include "protocol.h"
 
 class Peer : public MessageHandler {
     Q_OBJECT
