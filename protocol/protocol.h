@@ -14,6 +14,8 @@ public:
         RawData
     };
 
+    static Message* createMessage(Message::Type);
+
     Message(Type type = Generic) : m_type(type) {}
     Type type() const { return m_type; }
 
@@ -37,7 +39,7 @@ public:
     bool isScheduler() const { return m_isScheduler; }
 
 protected:
-    friend class ConnectionThread;
+    friend class Message;
     NodeInfo() : Message(Message::NodeInfo) {}
     virtual void serialize(QTextStream& stream) const;
     virtual void serialize(QDataStream& stream) const;
@@ -51,10 +53,10 @@ private:
 class RawData : public Message {
 public:
     RawData(const QByteArray& data);
-    const QByteArray& address() const { return m_data; }
+    const QByteArray& data() const { return m_data; }
 
 protected:
-    friend class ConnectionThread;
+    friend class Message;
     RawData() : Message(Message::RawData) {}
     virtual void serialize(QTextStream& stream) const;
     virtual void serialize(QDataStream& stream) const;

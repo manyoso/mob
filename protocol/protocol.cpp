@@ -12,6 +12,21 @@ QLatin1String messageTypeToString(Message::Type type)
     }
 }
 
+Message* Message::createMessage(Message::Type type)
+{
+    switch (type) {
+    case Message::Generic:
+        return new Message(Generic);
+    case Message::NodeInfo:
+        return new ::NodeInfo;
+    case Message::RawData:
+        return new ::RawData;
+    default:
+        qDebug() << "ERROR: unrecognized message type" << type << "!";
+        return 0;
+    }
+}
+
 void Message::serialize(QTextStream& stream) const
 {
     stream << "Type=" << messageTypeToString(m_type);
