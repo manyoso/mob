@@ -1,5 +1,5 @@
 include($$PWD/../mob.pri)
-include($$PWD/../protocol/protocol.pri)
+include($$PWD/../common/common.pri)
 
 TEMPLATE = app
 TARGET = mob
