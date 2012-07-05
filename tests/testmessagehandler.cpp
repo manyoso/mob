@@ -12,6 +12,7 @@ public:
     Peer(quint16 readPort, quint16 writePort)
         : MessageHandler(Global::firstIPv4Address("localhost"), readPort, writePort, 0)
     {
+        m_message = 0;
         m_thread = new QThread(this);
         moveToThread(m_thread);
         m_thread->start();
@@ -19,6 +20,9 @@ public:
 
     virtual ~Peer()
     {
+        delete m_message;
+        m_message = 0;
+
         m_thread->quit();
         if (!m_thread->wait(1000)) {
             m_thread->terminate();
@@ -45,6 +49,11 @@ public:
         return r;
     }
 
+    Message* lastMessageReceived()
+    {
+        return m_message;
+    }
+
 private slots:
     bool sendMessageInternal(Message* msg)
     {
@@ -64,11 +73,12 @@ private slots:
 protected:
     virtual void handleMessage(Message* msg, const QHostAddress& address)
     {
-        Q_UNUSED(msg);
-        Q_UNUSED(address);
+        QVERIFY(address == QHostAddress::LocalHost);
+        m_message = Message::cloneMessage(msg);
     }
 
 private:
+    Message* m_message;
     QThread* m_thread;
 };
 
@@ -95,11 +105,11 @@ void TestMessageHandler::sendMessage()
     Message msg;
     QVERIFY(peer1.sendMessage(&msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
+    QVERIFY(msg.type() == peer2.lastMessageReceived()->type());
 }
 
 void TestMessageHandler::sendLargeMessage()
 {
-    // Thiago said that over 1460 bytes is the key to whether the tcp socket will buffer so we need to check that...
     Peer peer1(1111, 2222);
     Peer peer2(2222, 1111);
     peer2.expectMessage();
@@ -110,6 +120,13 @@ void TestMessageHandler::sendLargeMessage()
     msg.setData(data);
     QVERIFY(peer1.sendMessage(&msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
+
+    Message* out = peer2.lastMessageReceived();
+    QVERIFY(out->type() == msg.type());
+    if (out->type() == msg.type()) {
+        RawData* raw = static_cast<RawData*>(out);
+        QVERIFY(raw->data() == msg.data());
+    }
 }
 
 #include "testmessagehandler.moc"

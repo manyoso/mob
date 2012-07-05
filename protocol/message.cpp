@@ -17,6 +17,31 @@ Message* Message::createMessage(Message::Type type)
     }
 }
 
+Message* Message::cloneMessage(const Message* messageToClone)
+{
+    Message* message = Message::createMessage(messageToClone->type());
+
+    const QMetaObject* object = message->metaObject();
+    const QMetaObject* objectToClone = messageToClone->metaObject();
+    Q_ASSERT(object == objectToClone);
+    if (object != objectToClone) {
+        delete message;
+        return 0;
+    }
+
+    for(int i = objectToClone->propertyOffset(); i < objectToClone->propertyCount(); ++i) {
+        QMetaProperty propertyToClone = objectToClone->property(i);
+        QVariant value = propertyToClone.read(messageToClone);
+        if (!propertyToClone.write(message, value)) {
+            Q_ASSERT(false);
+            delete message;
+            return 0;
+        }
+    }
+
+    return message;
+}
+
 void Message::serialize(QTextStream& stream) const
 {
     const QMetaObject* object = metaObject();

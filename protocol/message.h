@@ -26,6 +26,7 @@ public:
     };
 
     static Message* createMessage(Message::Type);
+    static Message* cloneMessage(const Message*);
 
     Message(Type type = Generic) : m_type(type) {}
     Type type() const { return m_type; }
