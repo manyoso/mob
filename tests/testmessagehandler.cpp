@@ -6,20 +6,26 @@
 #include "message.h"
 #include "messagehandler.h"
 
+#define INSTALL_CUSTOM_MESSAGE_FACTORY(messageType, messageFactory) \
+    static MessageFactory s_##messageType##Factory \
+        = Message::installMessageFactory((Message::Type)messageType, messageFactory);
+
+static const quint8 GenericType = Message::NumberOfTypes + 1;
 class Generic : public Message {
     Q_OBJECT
 public:
-    Generic() : Message(Message::Generic) {}
+    Generic() : Message((Message::Type)GenericType) {}
     static Message* createMessage() { return new Generic; }
 };
 
-INSTALL_MESSAGE_FACTORY(Generic, &Generic::createMessage);
+INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType, &Generic::createMessage);
 
+static const quint8 RawDataType = Message::NumberOfTypes + 2;
 class RawData : public Message {
     Q_OBJECT
     Q_PROPERTY(QByteArray data READ data WRITE setData STORED false)
 public:
-    RawData() : Message(Message::RawData) {}
+    RawData() : Message((Message::Type)RawDataType) {}
     const QByteArray& data() const { return m_data; }
     void setData(const QByteArray& data) { m_data = data; }
 
@@ -31,6 +37,8 @@ public:
 private:
     QByteArray m_data;
 };
+
+INSTALL_CUSTOM_MESSAGE_FACTORY(RawDataType, &RawData::createMessage);
 
 bool RawData::serialize(QIODevice* device)
 {
@@ -60,8 +68,6 @@ bool RawData::deserialize(QIODevice* device)
 
     return true;
 }
-
-INSTALL_MESSAGE_FACTORY(RawData, &RawData::createMessage);
 
 class Peer : public MessageHandler {
     Q_OBJECT

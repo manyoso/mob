@@ -27,11 +27,10 @@ class Message : public QObject {
     Q_ENUMS(Type)
 public:
     enum Type {
-        Generic = 0,
-        NodeInfo,
-        RawData
+        NodeInfo = 0
     };
 
+    const static quint8 NumberOfTypes = NodeInfo + 1;
     static Message* createMessage(Message::Type);
     static Message* cloneMessage(const Message*);
     static MessageFactory installMessageFactory(Message::Type, MessageFactory);
