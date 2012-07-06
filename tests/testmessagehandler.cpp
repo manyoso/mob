@@ -6,6 +6,63 @@
 #include "message.h"
 #include "messagehandler.h"
 
+class Generic : public Message {
+    Q_OBJECT
+public:
+    Generic() : Message(Message::Generic) {}
+    static Message* createMessage() { return new Generic; }
+};
+
+INSTALL_MESSAGE_FACTORY(Generic, &Generic::createMessage);
+
+class RawData : public Message {
+    Q_OBJECT
+    Q_PROPERTY(QByteArray data READ data WRITE setData STORED false)
+public:
+    RawData() : Message(Message::RawData) {}
+    const QByteArray& data() const { return m_data; }
+    void setData(const QByteArray& data) { m_data = data; }
+
+    virtual bool serialize(QIODevice* device);
+    virtual bool deserialize(QIODevice* device);
+
+    static Message* createMessage() { return new RawData; }
+
+private:
+    QByteArray m_data;
+};
+
+bool RawData::serialize(QIODevice* device)
+{
+    quint32 size = m_data.size();
+    if (device->write(reinterpret_cast<char*>(&size), sizeof(quint32)) == -1)
+        return false;
+
+    if (device->write(m_data) == -1)
+        return false;
+
+    return true;
+}
+
+bool RawData::deserialize(QIODevice* device)
+{
+    while(device->bytesAvailable() < 4)
+        device->waitForReadyRead(-1);
+
+    quint32 size = 0;
+    if (device->read(reinterpret_cast<char*>(&size), sizeof(quint32)) < 4)
+        return false;
+
+    while (quint32(m_data.size()) < size) {
+        m_data.append(device->readAll());
+        device->waitForReadyRead(-1);
+    }
+
+    return true;
+}
+
+INSTALL_MESSAGE_FACTORY(RawData, &RawData::createMessage);
+
 class Peer : public MessageHandler {
     Q_OBJECT
 public:
@@ -102,7 +159,7 @@ void TestMessageHandler::sendMessage()
     Peer peer2(2222, 1111);
     peer2.expectMessage();
 
-    Message msg;
+    Generic msg;
     QVERIFY(peer1.sendMessage(&msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
     QVERIFY(msg.type() == peer2.lastMessageReceived()->type());

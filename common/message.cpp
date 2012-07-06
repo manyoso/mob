@@ -2,19 +2,30 @@
 
 #include <QMetaProperty>
 
+QHash<Message::Type, MessageFactory>* factories()
+{
+    static QHash<Message::Type, MessageFactory>* s_factories = 0;
+    if (!s_factories)
+        s_factories = new QHash<Message::Type, MessageFactory>();
+    return s_factories;
+}
+
 Message* Message::createMessage(Message::Type type)
 {
-    switch (type) {
-    case Message::Generic:
-        return new Message(Generic);
-    case Message::NodeInfo:
-        return new ::NodeInfo;
-    case Message::RawData:
-        return new ::RawData;
-    default:
+    Q_ASSERT(factories()->contains(type));
+    if (!factories()->contains(type)) {
         qDebug() << "ERROR: unrecognized message type" << type << "!";
         return 0;
     }
+
+    MessageFactory factory = factories()->value(type);
+    return (*factory)();
+}
+
+MessageFactory Message::installMessageFactory(Message::Type type, MessageFactory factory)
+{
+    factories()->insert(type, factory);
+    return factory;
 }
 
 Message* Message::cloneMessage(const Message* messageToClone)
@@ -99,35 +110,6 @@ bool Message::serialize(QIODevice*)
 bool Message::deserialize(QIODevice*)
 {
     // no-op
-    return true;
-}
-
-bool RawData::serialize(QIODevice* device)
-{
-    quint32 size = m_data.size();
-    if (device->write(reinterpret_cast<char*>(&size), sizeof(quint32)) == -1)
-        return false;
-
-    if (device->write(m_data) == -1)
-        return false;
-
-    return true;
-}
-
-bool RawData::deserialize(QIODevice* device)
-{
-    while(device->bytesAvailable() < 4)
-        device->waitForReadyRead(-1);
-
-    quint32 size = 0;
-    if (device->read(reinterpret_cast<char*>(&size), sizeof(quint32)) < 4)
-        return false;
-
-    while (quint32(m_data.size()) < size) {
-        m_data.append(device->readAll());
-        device->waitForReadyRead(-1);
-    }
-
     return true;
 }
 
