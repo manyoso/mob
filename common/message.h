@@ -30,7 +30,7 @@ public:
         NodeInfo = 0
     };
 
-    const static quint8 NumberOfTypes = NodeInfo + 1;
+    const static quint16 NumberOfTypes = NodeInfo + 1;
     static Message* createMessage(Message::Type);
     static Message* cloneMessage(const Message*);
     static MessageFactory installMessageFactory(Message::Type, MessageFactory);

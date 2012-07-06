@@ -24,7 +24,7 @@ private:
     void readSocket(QTcpSocket* socket);
     int m_socketDescriptor;
     bool m_firstRead;
-    quint8 m_typeOfMessage;
+    quint16 m_typeOfMessage;
     quint32 m_sizeOfMessage;
     QHostAddress m_address;
     quint16 m_port;
@@ -85,7 +85,7 @@ void ConnectionThread::run()
 void ConnectionThread::readSocket(QTcpSocket* socket)
 {
     if (m_firstRead) {
-        socket->read(reinterpret_cast<char*>(&m_typeOfMessage), sizeof(quint8));
+        socket->read(reinterpret_cast<char*>(&m_typeOfMessage), sizeof(quint16));
 #if DEBUG_MESSAGEHANDLER
         qDebug() << "Reading type" << m_typeOfMessage << "from socket with" << socket->bytesAvailable() << "bytesAvailable";
 #endif
@@ -189,8 +189,8 @@ bool MessageHandler::sendMessage(Message* msg, const QHostAddress& address, bool
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream << *msg;
 
-    quint8 type = msg->type();
-    if (m_tcpSocket->write(reinterpret_cast<char*>(&type), sizeof(quint8)) == -1)
+    quint16 type = msg->type();
+    if (m_tcpSocket->write(reinterpret_cast<char*>(&type), sizeof(quint16)) == -1)
         qDebug() << "ERROR: Sending message could not write the type of the message to the socket!";
 
     quint32 size = bytes.size();

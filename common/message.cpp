@@ -79,7 +79,7 @@ void Message::serialize(QTextStream& stream) const
 
 void Message::serialize(QDataStream& stream) const
 {
-    stream << (quint8)m_type;
+    stream << (quint16)m_type;
     const QMetaObject* object = metaObject();
     for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
         QMetaProperty property = object->property(i);
@@ -90,7 +90,7 @@ void Message::serialize(QDataStream& stream) const
 
 void Message::deserialize(QDataStream& stream)
 {
-    quint8 type;
+    quint16 type;
     stream >> type;
     m_type = (Message::Type)type;
     const QMetaObject* object = metaObject();
