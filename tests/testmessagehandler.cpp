@@ -82,7 +82,15 @@ void TestMessageHandler::cleanupTestCase()
 void TestMessageHandler::sendMessage()
 {
     Peer peer1(1111, 2222);
+    QVERIFY(peer1.isRunning() == true);
+    QVERIFY(peer1.readPort() == 1111);
+    QVERIFY(peer1.writePort() == 2222);
+
     Peer peer2(2222, 1111);
+    QVERIFY(peer2.isRunning() == true);
+    QVERIFY(peer2.readPort() == 2222);
+    QVERIFY(peer2.writePort() == 1111);
+
     peer2.expectMessage();
 
     Generic msg;
@@ -94,7 +102,15 @@ void TestMessageHandler::sendMessage()
 void TestMessageHandler::sendLargeMessage()
 {
     Peer peer1(1111, 2222);
+    QVERIFY(peer1.isRunning() == true);
+    QVERIFY(peer1.readPort() == 1111);
+    QVERIFY(peer1.writePort() == 2222);
+
     Peer peer2(2222, 1111);
+    QVERIFY(peer2.isRunning() == true);
+    QVERIFY(peer2.readPort() == 2222);
+    QVERIFY(peer2.writePort() == 1111);
+
     peer2.expectMessage();
 
     QByteArray data;
