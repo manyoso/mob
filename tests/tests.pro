@@ -1,7 +1,7 @@
 include($$PWD/../mob.pri)
 include($$PWD/../common/common.pri)
 include($$PWD/../server/server.pri)
-include($$PWD/../server/client.pri)
+include($$PWD/../client/client.pri)
 
 TEMPLATE = app
 TARGET = mobtests

@@ -1,7 +1,7 @@
 #include "filesystem.h"
 
-#include "server.h"
 #include "fileoperations.h"
+#include "node.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDebug>
@@ -267,11 +267,19 @@ static void fs_destroy(void* p)
 #endif
 }
 
-struct FileSystemPrivate {};
+struct FileSystemPrivate
+{
+    FileSystemPrivate(Node* node)
+    {
+        m_node = node;
+    }
 
-FileSystem::FileSystem(QObject* parent)
-    : QThread(parent)
-    , d(new FileSystemPrivate)
+    Node* m_node;
+};
+
+FileSystem::FileSystem(Node* node)
+    : QThread(0)
+    , d(new FileSystemPrivate(node))
 {
     // The signal handlers *should not* be called by the main thread
     sigset_t x;
@@ -285,6 +293,12 @@ FileSystem::FileSystem(QObject* parent)
 FileSystem::~FileSystem()
 {
     delete d;
+}
+
+Node* FileSystem::node() const
+{
+    Q_ASSERT(d);
+    return d->m_node;
 }
 
 QString FileSystem::mountPoint() const

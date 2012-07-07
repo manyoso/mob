@@ -1,6 +1,5 @@
 #include "server.h"
 
-#include "filesystem.h"
 #include "global.h"
 
 #include <QtCore/QCoreApplication>
@@ -22,12 +21,6 @@ Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* p
     , m_broadcastTimer(0)
 {
     s_server = this;
-
-    FileSystem* fileSystem = new FileSystem(this);
-    connect(fileSystem, SIGNAL(finished()), QCoreApplication::instance(), SLOT(quit()));
-    connect(fileSystem, SIGNAL(terminated()), QCoreApplication::instance(), SLOT(quit()));
-    fileSystem->start();
-
     m_udpSocket = new QUdpSocket(this);
 
     if (!m_udpSocket->bind(!isScheduler ? address.ip() : QHostAddress::Any, _SCHEDULER_PORT_, QUdpSocket::DontShareAddress)) {
