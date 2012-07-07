@@ -75,7 +75,7 @@ void Server::processPendingDatagrams()
             Node* node = new Node(false /*isLocal*/, peerAddress);
             m_nodes.insert(peerAddress, node);
             NodeInfo info;
-            info.setAddress(address());
+            info.setAddress(address().toIPv4Address());
             info.setScheduler(scheduler());
             sendMessage(&info, node->address());
         }
@@ -100,9 +100,9 @@ void Server::handleMessage(Message* msg, const QHostAddress& address)
         m_broadcastTimer->stop();
         NodeInfo* nodeInfo = static_cast<NodeInfo*>(msg);
         Q_ASSERT(nodeInfo->scheduler());
-        Global::setScheduler(new Node(false /*isLocal*/, nodeInfo->address()));
+        Global::setScheduler(new Node(false /*isLocal*/, QHostAddress(nodeInfo->address())));
 #if DEBUG_SERVER
-        qDebug() << "Found scheduler at" << nodeInfo->address();
+        qDebug() << "Found scheduler at" << QHostAddress(nodeInfo->address());
 #endif
     }
 }
