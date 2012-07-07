@@ -31,7 +31,7 @@ public:
 
     bool sendMessage(Message* msg, const QHostAddress& address, bool sync = false);
     void expectMessage(const QHostAddress& address);
-    bool waitForMessage();
+    bool waitForMessage(unsigned long timeout = ULONG_MAX);
 
 protected:
     //! \brief Reimplemented from QTcpServer.

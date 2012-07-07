@@ -33,10 +33,10 @@ void Peer::expectMessage()
     QMetaObject::invokeMethod(this, "expectMessageInternal", Qt::BlockingQueuedConnection);
 }
 
-bool Peer::blockForMessage()
+bool Peer::blockForMessage(unsigned long timeout)
 {
     bool r;
-    QMetaObject::invokeMethod(this, "waitForMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r));
+    QMetaObject::invokeMethod(this, "waitForMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r), Q_ARG(unsigned long, timeout));
     return r;
 }
 
@@ -55,9 +55,9 @@ void Peer::expectMessageInternal()
     MessageHandler::expectMessage(QHostAddress::LocalHost);
 }
 
-bool Peer::waitForMessageInternal()
+bool Peer::waitForMessageInternal(unsigned long timeout)
 {
-    return MessageHandler::waitForMessage();
+    return MessageHandler::waitForMessage(timeout);
 }
 
 void Peer::handleMessage(Message* msg, const QHostAddress& address)

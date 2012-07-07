@@ -3,6 +3,7 @@
 #include "node.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QTime>
 
 #define DEBUG_MESSAGEHANDLER 0
 
@@ -227,23 +228,27 @@ void MessageHandler::expectMessage(const QHostAddress& address)
     }
 }
 
-bool MessageHandler::waitForMessage()
+bool MessageHandler::waitForMessage(unsigned long timeout)
 {
     if (!isRunning()) {
         qDebug() << "ERROR: Cannot wait for message because The TCP server is not running!";
         return false;
     }
 
+    QTime time;
+    if (timeout != ULONG_MAX)
+        time.start();
+
     {
         QMutexLocker locker(&m_connectWaitMutex);
-        if (m_connectWait)
-            m_connectWaitCondition.wait(&m_connectWaitMutex);
+        if (m_connectWait && !m_connectWaitCondition.wait(&m_connectWaitMutex, timeout))
+            return false;
     }
 
     {
         QMutexLocker locker(&m_messageWaitMutex);
-        if (!m_messageWait.isNull())
-            m_messageWaitCondition.wait(&m_messageWaitMutex);
+        if (!m_messageWait.isNull() && !m_messageWaitCondition.wait(&m_messageWaitMutex, timeout == ULONG_MAX ? timeout : timeout - time.elapsed()))
+            return false;
     }
     return true;
 }

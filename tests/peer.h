@@ -16,13 +16,13 @@ public:
 
     bool sendMessage(Message* msg);
     void expectMessage();
-    bool blockForMessage();
+    bool blockForMessage(unsigned long timeout = ULONG_MAX);
     Message* lastMessageReceived();
 
 private slots:
     bool sendMessageInternal(Message* msg);
     void expectMessageInternal();
-    bool waitForMessageInternal();
+    bool waitForMessageInternal(unsigned long timeout);
 
 protected:
     virtual void handleMessage(Message* msg, const QHostAddress& address);
