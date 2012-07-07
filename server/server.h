@@ -19,8 +19,6 @@ public:
     Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* parent);
     virtual ~Server();
 
-    Node* currentJob() const;
-
     QNetworkAddressEntry networkAddress() const { return m_networkAddress; }
 
 protected:

@@ -45,13 +45,6 @@ Server::~Server()
     m_nodes.clear();
 }
 
-Node* Server::currentJob() const
-{
-    if (m_nodes.isEmpty())
-        return 0;
-    return m_nodes.values().first();
-}
-
 void Server::processPendingDatagrams()
 {
     while (m_udpSocket->hasPendingDatagrams()) {
