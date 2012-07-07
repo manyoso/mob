@@ -7,8 +7,6 @@ DESTDIR = $$OUTPUT_DIR/bin
 CONFIG -= app_bundle
 QT += network
 
-DEPENDPATH += .
-INCLUDEPATH += .
+include($$PWD/client.pri)
 
-SOURCES += main.cpp client.cpp
-HEADERS += client.h
+SOURCES += main.cpp
