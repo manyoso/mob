@@ -1,4 +1,4 @@
-#include "testmessagehandler.h"
+#include "testmessage.h"
 
 #include "peer.h"
 
@@ -65,21 +65,21 @@ bool RawData::deserialize(QIODevice* device)
     return true;
 }
 
-struct TestMessageHandlerPrivate {
+struct TestMessagePrivate {
 };
 
-void TestMessageHandler::initTestCase()
+void TestMessage::initTestCase()
 {
-    d = new TestMessageHandlerPrivate;
+    d = new TestMessagePrivate;
 }
 
-void TestMessageHandler::cleanupTestCase()
+void TestMessage::cleanupTestCase()
 {
     delete d;
     d = 0;
 }
 
-void TestMessageHandler::sendMessage()
+void TestMessage::sendMessage()
 {
     Peer peer1(1111, 2222);
     QVERIFY(peer1.isRunning() == true);
@@ -99,7 +99,7 @@ void TestMessageHandler::sendMessage()
     QVERIFY(msg.type() == peer2.lastMessageReceived()->type());
 }
 
-void TestMessageHandler::sendLargeMessage()
+void TestMessage::sendLargeMessage()
 {
     Peer peer1(1111, 2222);
     QVERIFY(peer1.isRunning() == true);
@@ -128,4 +128,4 @@ void TestMessageHandler::sendLargeMessage()
     }
 }
 
-#include "testmessagehandler.moc"
+#include "testmessage.moc"

@@ -11,5 +11,5 @@ QT += network
 DEPENDPATH += .
 INCLUDEPATH += .
 
-SOURCES += main.cpp peer.cpp testmessagehandler.cpp
-HEADERS += peer.h testmessagehandler.h
+SOURCES += main.cpp peer.cpp testmessage.cpp
+HEADERS += peer.h testmessage.h

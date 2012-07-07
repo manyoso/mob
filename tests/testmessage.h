@@ -1,7 +1,7 @@
 #include <QtTest/QtTest>
 
-struct TestMessageHandlerPrivate;
-class TestMessageHandler: public QObject {
+struct TestMessagePrivate;
+class TestMessage: public QObject {
     Q_OBJECT
 private slots:
     void initTestCase();
@@ -11,5 +11,5 @@ private slots:
     void sendLargeMessage();
 
 private:
-    TestMessageHandlerPrivate* d;
+    TestMessagePrivate* d;
 };
