@@ -28,7 +28,8 @@ public:
     virtual ~MessageThread();
 signals:
     void socketError(QAbstractSocket::SocketError socketError);
-    void receivedMessage(QSharedPointer<Message> msg, const QHostAddress& address);
+    void incomingConnection(QSharedPointer<MessageThread>, const QHostAddress&);
+    void receivedMessage(QSharedPointer<Message>, const QHostAddress&);
 
 protected:
     virtual void run();

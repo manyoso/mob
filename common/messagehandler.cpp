@@ -46,6 +46,8 @@ void MessageThread::run()
     qDebug() << "Starting new connection thread with" << m_address << "on" << m_port;
 #endif
 
+    emit incomingConnection(QWeakPointer<MessageThread>(this), m_address);
+
     while (tcpSocket.state() == QAbstractSocket::ConnectedState) {
         // Need at least 5 bytes to begin reading the message
         if (tcpSocket.bytesAvailable() >= (m_firstRead ? 5 : m_sizeOfMessage)) {
@@ -252,6 +254,9 @@ void MessageHandler::incomingConnection(int socketDescriptor)
     connect(thread.data(), SIGNAL(terminated()), this, SLOT(messageThreadFinished()));
     connect(thread.data(), SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
             this, SLOT(receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
+    connect(thread.data(), SIGNAL(incomingConnection(QSharedPointer<MessageThread>, const QHostAddress&)),
+            this, SIGNAL(incomingConnection(QSharedPointer<MessageThread>, const QHostAddress&)), Qt::DirectConnection);
+
     m_threads.insert(thread);
     thread->start();
 
