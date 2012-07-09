@@ -39,7 +39,7 @@ Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* p
     }
 
     connect(this, SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
-            this, SLOT(handleMessage(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
+            this, SLOT(handleMessage(QSharedPointer<Message>, const QHostAddress&)));
 }
 
 Server::~Server()
