@@ -7,33 +7,8 @@
 
 #define DEBUG_MESSAGEHANDLER 0
 
-Q_DECLARE_METATYPE(QAbstractSocket::SocketError);
-
-class ConnectionThread : public QThread {
-    Q_OBJECT
-public:
-    ConnectionThread(int socketDescriptor, MessageHandler* parent);
-    virtual ~ConnectionThread();
-
-signals:
-    void socketError(QAbstractSocket::SocketError socketError);
-    void receivedMessage(QSharedPointer<Message> msg, const QHostAddress& address, quint16 port);
-
-protected:
-    virtual void run();
-
-private:
-    void readSocket(QTcpSocket* socket);
-    int m_socketDescriptor;
-    bool m_firstRead;
-    quint16 m_typeOfMessage;
-    quint32 m_sizeOfMessage;
-    QHostAddress m_address;
-    quint16 m_port;
-};
-
-ConnectionThread::ConnectionThread(int socketDescriptor, MessageHandler* parent)
-    : QThread(parent)
+MessageThread::MessageThread(int socketDescriptor)
+    : QThread(0)
     , m_socketDescriptor(socketDescriptor)
     , m_firstRead(true)
     , m_typeOfMessage(0)
@@ -42,7 +17,7 @@ ConnectionThread::ConnectionThread(int socketDescriptor, MessageHandler* parent)
 {
 }
 
-ConnectionThread::~ConnectionThread()
+MessageThread::~MessageThread()
 {
     if (!wait(1000)) {
         terminate();
@@ -50,7 +25,7 @@ ConnectionThread::~ConnectionThread()
     }
 }
 
-void ConnectionThread::run()
+void MessageThread::run()
 {
     QTcpSocket tcpSocket;
     if (!tcpSocket.setSocketDescriptor(m_socketDescriptor)) {
@@ -84,7 +59,7 @@ void ConnectionThread::run()
     }
 }
 
-void ConnectionThread::readSocket(QTcpSocket* socket)
+void MessageThread::readSocket(QTcpSocket* socket)
 {
     if (m_firstRead) {
         socket->read(reinterpret_cast<char*>(&m_typeOfMessage), sizeof(quint16));
@@ -121,7 +96,7 @@ void ConnectionThread::readSocket(QTcpSocket* socket)
     if (!msg->deserialize(socket))
         qDebug() << "ERROR: Receiving message could not deserialize the message directly from the socket!";
 
-    emit receivedMessage(msg, m_address, m_port);
+    emit receivedMessage(msg, m_address);
 }
 
 MessageHandler::MessageHandler(const QNetworkAddressEntry& address, quint16 port, QObject* parent)
@@ -146,12 +121,14 @@ MessageHandler::MessageHandler(const QNetworkAddressEntry& address, quint16 read
 
 MessageHandler::~MessageHandler()
 {
+    m_threads.clear();
 }
 
 void MessageHandler::init()
 {
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType< QSharedPointer<Message> >("QSharedPointer<Message>");
+    qRegisterMetaType< QSharedPointer<Message> >("QSharedPointer<MessageThread>");
     qRegisterMetaType< QHostAddress >("QHostAddress");
 
     if (!listen(QHostAddress::Any, readPort())) {
@@ -270,12 +247,12 @@ void MessageHandler::connectedSocketError(QAbstractSocket::SocketError error)
 
 void MessageHandler::incomingConnection(int socketDescriptor)
 {
-    ConnectionThread *thread = new ConnectionThread(socketDescriptor, this);
-    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
-    connect(thread, SIGNAL(socketError(QAbstractSocket::SocketError)),
-            this, SLOT(connectedSocketError(QAbstractSocket::SocketError)));
-    connect(thread, SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&, quint16)),
-            this, SLOT(receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&, quint16)), Qt::DirectConnection);
+    QSharedPointer<MessageThread> thread(new MessageThread(socketDescriptor));
+    connect(thread.data(), SIGNAL(finished()), this, SLOT(messageThreadFinished()));
+    connect(thread.data(), SIGNAL(terminated()), this, SLOT(messageThreadFinished()));
+    connect(thread.data(), SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
+            this, SLOT(receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
+    m_threads.insert(thread);
     thread->start();
 
     QMutexLocker locker(&m_connectWaitMutex);
@@ -285,12 +262,17 @@ void MessageHandler::incomingConnection(int socketDescriptor)
     }
 }
 
-void MessageHandler::receivedMessageInternal(QSharedPointer<Message> msg,  const QHostAddress& address, quint16 port)
+void MessageHandler::messageThreadFinished()
+{
+    QWeakPointer<MessageThread> thread(qobject_cast<MessageThread*>(sender()));
+    Q_ASSERT(m_threads.contains(thread));
+    m_threads.remove(thread);
+}
+
+void MessageHandler::receivedMessageInternal(QSharedPointer<Message> msg,  const QHostAddress& address)
 {
 #if DEBUG_MESSAGEHANDLER
-    qDebug() << "Receiving message" << *msg << "from" << address << "on" << port;
-#else
-    Q_UNUSED(port);
+    qDebug() << "Receiving message" << *msg << "from" << address;
 #endif
 
     emit receivedMessage(msg, address);
@@ -301,5 +283,3 @@ void MessageHandler::receivedMessageInternal(QSharedPointer<Message> msg,  const
         m_messageWaitCondition.wakeAll();
     }
 }
-
-#include "messagehandler.moc"

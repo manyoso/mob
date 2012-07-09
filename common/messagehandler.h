@@ -18,8 +18,35 @@
 class NetworkServer;
 class QThread;
 
+Q_DECLARE_METATYPE(QAbstractSocket::SocketError);
 Q_DECLARE_METATYPE(QSharedPointer<Message>);
 Q_DECLARE_METATYPE(QHostAddress);
+
+class MessageThread : public QThread {
+    Q_OBJECT
+public:
+    virtual ~MessageThread();
+signals:
+    void socketError(QAbstractSocket::SocketError socketError);
+    void receivedMessage(QSharedPointer<Message> msg, const QHostAddress& address);
+
+protected:
+    virtual void run();
+
+private:
+    friend class MessageHandler;
+    MessageThread(int socketDescriptor);
+    void readSocket(QTcpSocket* socket);
+
+    int m_socketDescriptor;
+    bool m_firstRead;
+    quint16 m_typeOfMessage;
+    quint32 m_sizeOfMessage;
+    QHostAddress m_address;
+    quint16 m_port;
+};
+
+Q_DECLARE_METATYPE(QSharedPointer<MessageThread>);
 
 class MessageHandler : public QTcpServer {
     Q_OBJECT
@@ -38,17 +65,17 @@ public:
     bool waitForMessage(unsigned long timeout = ULONG_MAX);
 
 signals:
+    void incomingConnection(QSharedPointer<MessageThread>, const QHostAddress&);
     void receivedMessage(QSharedPointer<Message>, const QHostAddress&);
 
 protected:
-    //! \brief Reimplemented from QTcpServer.
     virtual void incomingConnection(int);
 
 private slots:
-    friend class ConnectionThread;
+    void messageThreadFinished();
     void socketError(QAbstractSocket::SocketError);
     void connectedSocketError(QAbstractSocket::SocketError);
-    void receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&, quint16);
+    void receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&);
 
 private:
     void init();
@@ -65,6 +92,8 @@ private:
     QHostAddress m_messageWait;
     QMutex m_messageWaitMutex;
     QWaitCondition m_messageWaitCondition;
+
+    QSet< QSharedPointer<MessageThread> > m_threads;
 };
 
 #endif // messagehandler_h
