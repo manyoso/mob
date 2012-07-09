@@ -18,6 +18,13 @@ HEADERS += \
     $$PWD/node.h \
     $$PWD/remotefile.h
 
+linux-g++ {
+    ### For FUSE
+    SOURCES += $$PWD/filesystem_fuse.cpp
+    DEFINES += "_FILE_OFFSET_BITS=64"
+    LIBS += "-lfuse"
+}
+
 macx {
     ### For Fuse4X
     SOURCES += $$PWD/filesystem_fuse.cpp
