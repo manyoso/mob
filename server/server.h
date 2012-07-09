@@ -21,10 +21,8 @@ public:
 
     QNetworkAddressEntry networkAddress() const { return m_networkAddress; }
 
-protected:
-    virtual void handleMessage(QSharedPointer<Message>, const QHostAddress&);
-
 private slots:
+    void handleMessage(QSharedPointer<Message>, const QHostAddress&);
     void broadcast();
     void processPendingDatagrams();
 

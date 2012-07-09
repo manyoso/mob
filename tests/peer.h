@@ -23,9 +23,7 @@ private slots:
     bool sendMessageInternal(Message* msg);
     void expectMessageInternal();
     bool waitForMessageInternal(unsigned long timeout);
-
-protected:
-    virtual void handleMessage(QSharedPointer<Message>, const QHostAddress&);
+    void handleMessage(QSharedPointer<Message>, const QHostAddress&);
 
 private:
     QSharedPointer<Message> m_message;

@@ -6,6 +6,9 @@ Peer::Peer(quint16 readPort, quint16 writePort)
     m_thread = new QThread(this);
     moveToThread(m_thread);
     m_thread->start();
+
+    connect(this, SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
+            this, SLOT(handleMessage(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
 }
 
 Peer::~Peer()

@@ -37,6 +37,9 @@ Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* p
         Global::setScheduler(this);
         connect(m_udpSocket, SIGNAL(readyRead()), this, SLOT(processPendingDatagrams()));
     }
+
+    connect(this, SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
+            this, SLOT(handleMessage(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
 }
 
 Server::~Server()

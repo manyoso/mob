@@ -37,18 +37,18 @@ public:
     void expectMessage(const QHostAddress& address);
     bool waitForMessage(unsigned long timeout = ULONG_MAX);
 
+signals:
+    void receivedMessage(QSharedPointer<Message>, const QHostAddress&);
+
 protected:
     //! \brief Reimplemented from QTcpServer.
     virtual void incomingConnection(int);
-
-    //! \brief Will be called on another thread.
-    virtual void handleMessage(QSharedPointer<Message>, const QHostAddress&) = 0;
 
 private slots:
     friend class ConnectionThread;
     void socketError(QAbstractSocket::SocketError);
     void connectedSocketError(QAbstractSocket::SocketError);
-    void handleMessageInternal(QSharedPointer<Message>, const QHostAddress&, quint16);
+    void receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&, quint16);
 
 private:
     void init();

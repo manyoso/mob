@@ -275,7 +275,7 @@ void MessageHandler::incomingConnection(int socketDescriptor)
     connect(thread, SIGNAL(socketError(QAbstractSocket::SocketError)),
             this, SLOT(connectedSocketError(QAbstractSocket::SocketError)));
     connect(thread, SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&, quint16)),
-            this, SLOT(handleMessageInternal(QSharedPointer<Message>, const QHostAddress&, quint16)), Qt::DirectConnection);
+            this, SLOT(receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&, quint16)), Qt::DirectConnection);
     thread->start();
 
     QMutexLocker locker(&m_connectWaitMutex);
@@ -285,7 +285,7 @@ void MessageHandler::incomingConnection(int socketDescriptor)
     }
 }
 
-void MessageHandler::handleMessageInternal(QSharedPointer<Message> msg,  const QHostAddress& address, quint16 port)
+void MessageHandler::receivedMessageInternal(QSharedPointer<Message> msg,  const QHostAddress& address, quint16 port)
 {
 #if DEBUG_MESSAGEHANDLER
     qDebug() << "Receiving message" << *msg << "from" << address << "on" << port;
@@ -293,7 +293,7 @@ void MessageHandler::handleMessageInternal(QSharedPointer<Message> msg,  const Q
     Q_UNUSED(port);
 #endif
 
-    handleMessage(msg, address);
+    emit receivedMessage(msg, address);
 
     QMutexLocker locker(&m_messageWaitMutex);
     if (!m_messageWait.isNull() && address == m_messageWait) {
