@@ -3,7 +3,6 @@
 Peer::Peer(quint16 readPort, quint16 writePort)
     : MessageHandler(Global::firstIPv4Address("localhost"), readPort, writePort, 0)
 {
-    m_message = 0;
     m_thread = new QThread(this);
     moveToThread(m_thread);
     m_thread->start();
@@ -11,9 +10,7 @@ Peer::Peer(quint16 readPort, quint16 writePort)
 
 Peer::~Peer()
 {
-    delete m_message;
-    m_message = 0;
-
+    m_message.clear();
     m_thread->quit();
     if (!m_thread->wait(1000)) {
         m_thread->terminate();
@@ -40,7 +37,7 @@ bool Peer::blockForMessage(unsigned long timeout)
     return r;
 }
 
-Message* Peer::lastMessageReceived()
+QSharedPointer<Message> Peer::lastMessageReceived() const
 {
     return m_message;
 }
@@ -60,8 +57,8 @@ bool Peer::waitForMessageInternal(unsigned long timeout)
     return MessageHandler::waitForMessage(timeout);
 }
 
-void Peer::handleMessage(Message* msg, const QHostAddress& address)
+void Peer::handleMessage(QSharedPointer<Message> msg, const QHostAddress& address)
 {
     QVERIFY(address == QHostAddress::LocalHost);
-    m_message = Message::cloneMessage(msg);
+    m_message = msg;
 }

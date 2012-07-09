@@ -120,12 +120,22 @@ void TestMessage::sendLargeMessage()
     QVERIFY(peer1.sendMessage(&msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
 
-    Message* out = peer2.lastMessageReceived();
+    QSharedPointer<Message> out = peer2.lastMessageReceived();
     QVERIFY(out->type() == msg.type());
     if (out->type() == msg.type()) {
-        RawData* raw = static_cast<RawData*>(out);
+        QSharedPointer<RawData> raw = out.staticCast<RawData>();
         QVERIFY(raw->data() == msg.data());
     }
+}
+
+void TestMessage::testMessageWaitTimeout()
+{
+    Peer peer2(2222, 1111);
+    QVERIFY(peer2.isRunning() == true);
+    QVERIFY(peer2.readPort() == 2222);
+    QVERIFY(peer2.writePort() == 1111);
+    peer2.expectMessage();
+    QVERIFY(peer2.blockForMessage(0) == false);
 }
 
 #include "testmessage.moc"

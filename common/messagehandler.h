@@ -7,6 +7,7 @@
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
+#include <QtCore/QSharedPointer>
 #include <QtCore/QThread>
 #include <QtCore/QWaitCondition>
 
@@ -16,6 +17,9 @@
 
 class NetworkServer;
 class QThread;
+
+Q_DECLARE_METATYPE(QSharedPointer<Message>);
+Q_DECLARE_METATYPE(QHostAddress);
 
 class MessageHandler : public QTcpServer {
     Q_OBJECT
@@ -35,19 +39,19 @@ public:
 
 protected:
     //! \brief Reimplemented from QTcpServer.
-    virtual void incomingConnection(int socketDescriptor);
+    virtual void incomingConnection(int);
 
     //! \brief Will be called on another thread.
-    virtual void handleMessage(Message* msg, const QHostAddress& address) = 0;
+    virtual void handleMessage(QSharedPointer<Message>, const QHostAddress&) = 0;
 
 private slots:
+    friend class ConnectionThread;
     void socketError(QAbstractSocket::SocketError);
     void connectedSocketError(QAbstractSocket::SocketError);
+    void handleMessageInternal(QSharedPointer<Message>, const QHostAddress&, quint16);
 
 private:
     void init();
-    friend class ConnectionThread;
-    void handleMessageInternal(Message*, const QHostAddress& address, quint16 port);
 
     QNetworkAddressEntry m_networkAddress;
     quint16 m_readPort;

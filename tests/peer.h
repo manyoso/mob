@@ -17,7 +17,7 @@ public:
     bool sendMessage(Message* msg);
     void expectMessage();
     bool blockForMessage(unsigned long timeout = ULONG_MAX);
-    Message* lastMessageReceived();
+    QSharedPointer<Message> lastMessageReceived() const;
 
 private slots:
     bool sendMessageInternal(Message* msg);
@@ -25,10 +25,10 @@ private slots:
     bool waitForMessageInternal(unsigned long timeout);
 
 protected:
-    virtual void handleMessage(Message* msg, const QHostAddress& address);
+    virtual void handleMessage(QSharedPointer<Message>, const QHostAddress&);
 
 private:
-    Message* m_message;
+    QSharedPointer<Message> m_message;
     QThread* m_thread;
 };
 

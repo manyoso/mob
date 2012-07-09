@@ -9,6 +9,7 @@ private slots:
 
     void sendMessage();
     void sendLargeMessage();
+    void testMessageWaitTimeout();
 
 private:
     TestMessagePrivate* d;

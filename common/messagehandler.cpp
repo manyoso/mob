@@ -17,6 +17,7 @@ public:
 
 signals:
     void socketError(QAbstractSocket::SocketError socketError);
+    void receivedMessage(QSharedPointer<Message> msg, const QHostAddress& address, quint16 port);
 
 protected:
     virtual void run();
@@ -108,8 +109,7 @@ void ConnectionThread::readSocket(QTcpSocket* socket)
     qDebug() << "Reading message from socket of size" << socket->bytesAvailable();
 #endif
 
-    MessageHandler* handler = qobject_cast<MessageHandler*>(parent());
-    Message* msg = Message::createMessage(Message::Type(m_typeOfMessage));
+    QSharedPointer<Message> msg(Message::createMessage(Message::Type(m_typeOfMessage)));
     if (!msg) {
         qDebug() << "ERROR: Unrecognized message type" << m_typeOfMessage << "!";
         QCoreApplication::exit(1);
@@ -121,8 +121,7 @@ void ConnectionThread::readSocket(QTcpSocket* socket)
     if (!msg->deserialize(socket))
         qDebug() << "ERROR: Receiving message could not deserialize the message directly from the socket!";
 
-    handler->handleMessageInternal(msg, m_address, m_port);
-    delete msg;
+    emit receivedMessage(msg, m_address, m_port);
 }
 
 MessageHandler::MessageHandler(const QNetworkAddressEntry& address, quint16 port, QObject* parent)
@@ -152,6 +151,8 @@ MessageHandler::~MessageHandler()
 void MessageHandler::init()
 {
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
+    qRegisterMetaType< QSharedPointer<Message> >("QSharedPointer<Message>");
+    qRegisterMetaType< QHostAddress >("QHostAddress");
 
     if (!listen(QHostAddress::Any, readPort())) {
         qDebug() << "ERROR: Could not start the TCP server!";
@@ -273,6 +274,8 @@ void MessageHandler::incomingConnection(int socketDescriptor)
     connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
     connect(thread, SIGNAL(socketError(QAbstractSocket::SocketError)),
             this, SLOT(connectedSocketError(QAbstractSocket::SocketError)));
+    connect(thread, SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&, quint16)),
+            this, SLOT(handleMessageInternal(QSharedPointer<Message>, const QHostAddress&, quint16)), Qt::DirectConnection);
     thread->start();
 
     QMutexLocker locker(&m_connectWaitMutex);
@@ -282,7 +285,7 @@ void MessageHandler::incomingConnection(int socketDescriptor)
     }
 }
 
-void MessageHandler::handleMessageInternal(Message* msg,  const QHostAddress& address, quint16 port)
+void MessageHandler::handleMessageInternal(QSharedPointer<Message> msg,  const QHostAddress& address, quint16 port)
 {
 #if DEBUG_MESSAGEHANDLER
     qDebug() << "Receiving message" << *msg << "from" << address << "on" << port;

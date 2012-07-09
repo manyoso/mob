@@ -22,7 +22,7 @@ public:
     QNetworkAddressEntry networkAddress() const { return m_networkAddress; }
 
 protected:
-    virtual void handleMessage(Message* message, const QHostAddress& address);
+    virtual void handleMessage(QSharedPointer<Message>, const QHostAddress&);
 
 private slots:
     void broadcast();

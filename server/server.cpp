@@ -77,14 +77,14 @@ void Server::broadcast()
     m_udpSocket->writeDatagram(0, 0, networkAddress().broadcast(), _SCHEDULER_PORT_);
 }
 
-void Server::handleMessage(Message* msg, const QHostAddress& address)
+void Server::handleMessage(QSharedPointer<Message> msg, const QHostAddress& address)
 {
     Q_UNUSED(address);
 
     // The first message we receive will be an info message from the scheduler
     if (!scheduler() && m_broadcastTimer->isActive() && msg->type() == Message::NodeInfo) {
         m_broadcastTimer->stop();
-        NodeInfo* nodeInfo = static_cast<NodeInfo*>(msg);
+        QSharedPointer<NodeInfo> nodeInfo = msg.staticCast<NodeInfo>();
         Q_ASSERT(nodeInfo->scheduler());
         Global::setScheduler(new Node(false /*isLocal*/, QHostAddress(nodeInfo->address())));
 #if DEBUG_SERVER

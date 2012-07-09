@@ -24,10 +24,10 @@ void TestNode::sendNodeMessage()
     QVERIFY(peer1.sendMessage(&msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
 
-    Message* out = peer2.lastMessageReceived();
+    QSharedPointer<Message> out = peer2.lastMessageReceived();
     QVERIFY(out->type() == msg.type());
     if (out->type() == msg.type()) {
-        NodeInfo* info = static_cast<NodeInfo*>(out);
+        QSharedPointer<NodeInfo> info = out.staticCast<NodeInfo>();
         QVERIFY(info->address() == node.address().toIPv4Address());
         QVERIFY(info->scheduler() == node.scheduler());
     }
