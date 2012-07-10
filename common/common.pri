@@ -4,7 +4,7 @@ SOURCES += \
     $$PWD/global.cpp \
     $$PWD/localfile.cpp \
     $$PWD/message.cpp \
-    $$PWD/messagehandler.cpp \
+    $$PWD/messageserver.cpp \
     $$PWD/node.cpp \
     $$PWD/remotefile.cpp
 
@@ -14,7 +14,7 @@ HEADERS += \
     $$PWD/global.h \
     $$PWD/localfile.h \
     $$PWD/message.h \
-    $$PWD/messagehandler.h \
+    $$PWD/messageserver.h \
     $$PWD/node.h \
     $$PWD/remotefile.h
 

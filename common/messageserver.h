@@ -1,5 +1,5 @@
-#ifndef messagehandler_h
-#define messagehandler_h
+#ifndef messageserver_h
+#define messageserver_h
 
 #include "message.h"
 
@@ -35,7 +35,7 @@ protected:
     virtual void run();
 
 private:
-    friend class MessageHandler;
+    friend class MessageServer;
     MessageThread(int socketDescriptor);
     void readSocket(QTcpSocket* socket);
 
@@ -49,12 +49,12 @@ private:
 
 Q_DECLARE_METATYPE(QSharedPointer<MessageThread>);
 
-class MessageHandler : public QTcpServer {
+class MessageServer : public QTcpServer {
     Q_OBJECT
 public:
-    MessageHandler(const QNetworkAddressEntry& address, quint16 port, QObject* parent);
-    MessageHandler(const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort, QObject* parent);
-    virtual ~MessageHandler();
+    MessageServer(const QNetworkAddressEntry& address, quint16 port, QObject* parent);
+    MessageServer(const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort, QObject* parent);
+    virtual ~MessageServer();
 
     bool isRunning() const;
 
@@ -97,4 +97,4 @@ private:
     QSet< QSharedPointer<MessageThread> > m_threads;
 };
 
-#endif // messagehandler_h
+#endif // messageserver_h

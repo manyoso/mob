@@ -15,7 +15,7 @@ Server* server()
 }
 
 Server::Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* parent)
-    : MessageHandler(address, _SCHEDULER_PORT_, parent)
+    : MessageServer(address, _SCHEDULER_PORT_, parent)
     , Node(true /*isLocal*/, address.ip())
     , m_networkAddress(address)
     , m_broadcastTimer(0)

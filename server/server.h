@@ -2,7 +2,7 @@
 #define server_h
 
 #include "node.h"
-#include "messagehandler.h"
+#include "messageserver.h"
 
 #include <QtCore/QTimer>
 #include <QtNetwork/QHostAddress>
@@ -13,7 +13,7 @@ class QUdpSocket;
 class Server;
 extern Server* server();
 
-class Server : public MessageHandler, public Node {
+class Server : public MessageServer, public Node {
     Q_OBJECT
 public:
     Server(const QNetworkAddressEntry& address, bool isScheduler, QObject* parent);

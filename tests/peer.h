@@ -6,9 +6,9 @@
 
 #include "global.h"
 #include "message.h"
-#include "messagehandler.h"
+#include "messageserver.h"
 
-class Peer : public MessageHandler {
+class Peer : public MessageServer {
     Q_OBJECT
 public:
     Peer(quint16 readPort, quint16 writePort);

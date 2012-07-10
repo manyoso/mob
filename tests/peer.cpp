@@ -1,7 +1,7 @@
 #include "peer.h"
 
 Peer::Peer(quint16 readPort, quint16 writePort)
-    : MessageHandler(Global::firstIPv4Address("localhost"), readPort, writePort, 0)
+    : MessageServer(Global::firstIPv4Address("localhost"), readPort, writePort, 0)
 {
     m_thread = new QThread(this);
     moveToThread(m_thread);
@@ -47,17 +47,17 @@ QSharedPointer<Message> Peer::lastMessageReceived() const
 
 bool Peer::sendMessageInternal(Message* msg)
 {
-    return MessageHandler::sendMessage(msg, QHostAddress::LocalHost, false);
+    return MessageServer::sendMessage(msg, QHostAddress::LocalHost, false);
 }
 
 void Peer::expectMessageInternal()
 {
-    MessageHandler::expectMessage(QHostAddress::LocalHost);
+    MessageServer::expectMessage(QHostAddress::LocalHost);
 }
 
 bool Peer::waitForMessageInternal(unsigned long timeout)
 {
-    return MessageHandler::waitForMessage(timeout);
+    return MessageServer::waitForMessage(timeout);
 }
 
 void Peer::handleMessage(QSharedPointer<Message> msg, const QHostAddress& address)
