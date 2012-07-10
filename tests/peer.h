@@ -26,6 +26,7 @@ private slots:
     void handleMessage(QSharedPointer<Message>, const QHostAddress&);
 
 private:
+    QSharedPointer<MessageHandler> m_handler;
     QSharedPointer<Message> m_message;
     QThread* m_thread;
 };

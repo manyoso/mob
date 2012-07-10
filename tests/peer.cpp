@@ -3,16 +3,20 @@
 Peer::Peer(quint16 readPort, quint16 writePort)
     : MessageServer(Global::firstIPv4Address("localhost"), readPort, writePort, 0)
 {
+    m_handler = QSharedPointer<MessageHandler>(new MessageHandler());
+    installMessageHandler(m_handler);
+
     m_thread = new QThread(this);
     moveToThread(m_thread);
     m_thread->start();
 
-    connect(this, SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
+    connect(m_handler.data(), SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
             this, SLOT(handleMessage(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
 }
 
 Peer::~Peer()
 {
+    m_handler.clear();
     m_message.clear();
     m_thread->quit();
     if (!m_thread->wait(1000)) {
@@ -52,12 +56,12 @@ bool Peer::sendMessageInternal(Message* msg)
 
 void Peer::expectMessageInternal()
 {
-    MessageServer::expectMessage(QHostAddress::LocalHost);
+    m_handler->expectMessage(QHostAddress::LocalHost);
 }
 
 bool Peer::waitForMessageInternal(unsigned long timeout)
 {
-    return MessageServer::waitForMessage(timeout);
+    return m_handler->waitForMessage(timeout);
 }
 
 void Peer::handleMessage(QSharedPointer<Message> msg, const QHostAddress& address)
