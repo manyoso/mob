@@ -4,14 +4,14 @@ Peer::Peer(quint16 readPort, quint16 writePort)
     : MessageServer(Global::firstIPv4Address("localhost"), readPort, writePort, 0)
 {
     m_handler = QSharedPointer<MessageHandler>(new MessageHandler());
+    connect(m_handler.data(), SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
+            this, SLOT(handleMessage(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
+
     installMessageHandler(m_handler);
 
     m_thread = new QThread(this);
     moveToThread(m_thread);
     m_thread->start();
-
-    connect(m_handler.data(), SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
-            this, SLOT(handleMessage(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
 }
 
 Peer::~Peer()
