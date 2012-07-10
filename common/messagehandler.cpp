@@ -35,14 +35,18 @@ bool MessageHandler::waitForMessage(unsigned long timeout)
 
     {
         QMutexLocker locker(&m_connectWaitMutex);
-        if (m_connectWait && !m_connectWaitCondition.wait(&m_connectWaitMutex, timeout))
+        if (m_connectWait && !m_connectWaitCondition.wait(&m_connectWaitMutex, timeout)) {
+            m_connectWait = false;
             return false;
+        }
     }
 
     {
         QMutexLocker locker(&m_messageWaitMutex);
-        if (!m_messageWait.isNull() && !m_messageWaitCondition.wait(&m_messageWaitMutex, timeout == ULONG_MAX ? timeout : timeout - time.elapsed()))
+        if (!m_messageWait.isNull() && !m_messageWaitCondition.wait(&m_messageWaitMutex, timeout == ULONG_MAX ? timeout : timeout - time.elapsed())) {
+            m_messageWait = QHostAddress();
             return false;
+        }
     }
     return true;
 }
