@@ -14,13 +14,13 @@ public:
     Peer(quint16 readPort, quint16 writePort);
     virtual ~Peer();
 
-    bool sendMessage(Message* msg);
+    bool sendMessage(const Message& msg);
     void expectMessage();
     bool blockForMessage(unsigned long timeout = ULONG_MAX);
     QSharedPointer<Message> lastMessageReceived() const;
 
 private slots:
-    bool sendMessageInternal(Message* msg);
+    bool sendMessageInternal(const Message& msg);
     void expectMessageInternal();
     bool waitForMessageInternal(unsigned long timeout);
     void handleMessage(QSharedPointer<Message>, const QHostAddress&);

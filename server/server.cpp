@@ -66,7 +66,7 @@ void Server::processPendingDatagrams()
             NodeInfo info;
             info.setAddress(address().toIPv4Address());
             info.setScheduler(scheduler());
-            sendMessage(&info, node->address());
+            sendMessage(info, node->address());
         }
     }
 }

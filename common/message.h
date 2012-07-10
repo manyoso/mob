@@ -37,7 +37,7 @@ public:
 
     Type type() const { return m_type; }
 
-    virtual bool serialize(QIODevice* device);
+    virtual bool serialize(QIODevice* device) const;
     virtual bool deserialize(QIODevice* device);
 
 protected:

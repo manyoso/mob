@@ -21,7 +21,7 @@ void TestNode::sendNodeMessage()
     NodeInfo msg;
     msg.setAddress(node.address().toIPv4Address());
     msg.setScheduler(node.scheduler());
-    QVERIFY(peer1.sendMessage(&msg) == true);
+    QVERIFY(peer1.sendMessage(msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
 
     QSharedPointer<Message> out = peer2.lastMessageReceived();

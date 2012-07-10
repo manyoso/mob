@@ -25,10 +25,10 @@ Peer::~Peer()
     }
 }
 
-bool Peer::sendMessage(Message* msg)
+bool Peer::sendMessage(const Message& msg)
 {
     bool r;
-    QMetaObject::invokeMethod(this, "sendMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r), Q_ARG(Message*, msg));
+    QMetaObject::invokeMethod(this, "sendMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r), Q_ARG(const Message&, msg));
     return r;
 }
 
@@ -49,7 +49,7 @@ QSharedPointer<Message> Peer::lastMessageReceived() const
     return m_message;
 }
 
-bool Peer::sendMessageInternal(Message* msg)
+bool Peer::sendMessageInternal(const Message& msg)
 {
     return MessageServer::sendMessage(msg, QHostAddress::LocalHost, false);
 }

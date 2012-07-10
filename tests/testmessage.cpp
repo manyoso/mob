@@ -25,7 +25,7 @@ public:
     const QByteArray& data() const { return m_data; }
     void setData(const QByteArray& data) { m_data = data; }
 
-    virtual bool serialize(QIODevice* device);
+    virtual bool serialize(QIODevice* device) const;
     virtual bool deserialize(QIODevice* device);
 
     static Message* createMessage() { return new RawData; }
@@ -36,7 +36,7 @@ private:
 
 INSTALL_CUSTOM_MESSAGE_FACTORY(RawDataType, &RawData::createMessage);
 
-bool RawData::serialize(QIODevice* device)
+bool RawData::serialize(QIODevice* device) const
 {
     quint32 size = m_data.size();
     if (device->write(reinterpret_cast<char*>(&size), sizeof(quint32)) == -1)
@@ -94,7 +94,7 @@ void TestMessage::sendMessage()
     peer2.expectMessage();
 
     Generic msg;
-    QVERIFY(peer1.sendMessage(&msg) == true);
+    QVERIFY(peer1.sendMessage(msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
     QVERIFY(msg.type() == peer2.lastMessageReceived()->type());
 }
@@ -117,7 +117,7 @@ void TestMessage::sendLargeMessage()
     data.fill('X', 1024 * 1024);
     RawData msg;
     msg.setData(data);
-    QVERIFY(peer1.sendMessage(&msg) == true);
+    QVERIFY(peer1.sendMessage(msg) == true);
     QVERIFY(peer2.blockForMessage() == true);
 
     QSharedPointer<Message> out = peer2.lastMessageReceived();

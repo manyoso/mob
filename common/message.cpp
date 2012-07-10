@@ -101,7 +101,7 @@ void Message::deserialize(QDataStream& stream)
     }
 }
 
-bool Message::serialize(QIODevice*)
+bool Message::serialize(QIODevice*) const
 {
     // no-op
     return true;

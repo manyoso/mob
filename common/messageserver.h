@@ -32,7 +32,7 @@ public:
      * If sync is true it will block until the message is sent and going over the
      * wire.
      */
-     bool sendMessage(Message* msg, const QHostAddress& address, bool sync = false);
+     bool sendMessage(const Message& msg, const QHostAddress& address, bool sync = false);
 
     /*!
       \brief Installs a message handler for messages received from host.

@@ -204,7 +204,7 @@ quint16 MessageServer::writePort() const
     return d->m_writePort;
 }
 
-bool MessageServer::sendMessage(Message* msg, const QHostAddress& address, bool sync)
+bool MessageServer::sendMessage(const Message& msg, const QHostAddress& address, bool sync)
 {
     if (!isRunning()) {
         qDebug() << "ERROR: Cannot send a message because the TCP server is not running!";
@@ -212,7 +212,7 @@ bool MessageServer::sendMessage(Message* msg, const QHostAddress& address, bool 
     }
 
 #if DEBUG_MESSAGESERVER
-    qDebug() << "Sending message" << *msg << "to" << address << "on" << d->m_writePort;
+    qDebug() << "Sending message" << msg << "to" << address << "on" << d->m_writePort;
 #endif
 
     d->m_tcpSocket->connectToHost(address, d->m_writePort, QIODevice::WriteOnly);
@@ -223,9 +223,9 @@ bool MessageServer::sendMessage(Message* msg, const QHostAddress& address, bool 
 
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
-    stream << *msg;
+    stream << msg;
 
-    quint16 type = msg->type();
+    quint16 type = msg.type();
     if (d->m_tcpSocket->write(reinterpret_cast<char*>(&type), sizeof(quint16)) == -1)
         qDebug() << "ERROR: Sending message could not write the type of the message to the socket!";
 
@@ -236,7 +236,7 @@ bool MessageServer::sendMessage(Message* msg, const QHostAddress& address, bool 
     if (d->m_tcpSocket->write(bytes) == -1)
         qDebug() << "ERROR: Sending message could not write the message to the socket!";
 
-    if (!msg->serialize(d->m_tcpSocket))
+    if (!msg.serialize(d->m_tcpSocket))
         qDebug() << "ERROR: Sending message could not serialize the message directly to the socket!";
 
     d->m_tcpSocket->disconnectFromHost();
