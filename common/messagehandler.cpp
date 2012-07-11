@@ -5,6 +5,41 @@
 
 #define DEBUG_MESSAGEHANDLER 0
 
+MessageFilter::MessageFilter()
+    : m_messageType(Message::Type(-1))
+{
+}
+
+QByteArray MessageFilter::messageId() const
+{
+    return m_messageId;
+}
+
+void MessageFilter::setMessageId(const QByteArray& id)
+{
+    m_messageId = id;
+}
+
+Message::Type MessageFilter::messageType() const
+{
+    return m_messageType;
+}
+
+void MessageFilter::setMessageType(Message::Type type)
+{
+    m_messageType = type;
+}
+
+QHostAddress MessageFilter::address() const
+{
+    return m_address;
+}
+
+void MessageFilter::setAddress(const QHostAddress& address)
+{
+    m_address = address;
+}
+
 MessageHandler::MessageHandler()
     : m_connectWait(false)
 {
