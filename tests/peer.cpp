@@ -1,5 +1,7 @@
 #include "peer.h"
 
+#include <QtTest/QtTest>
+
 Peer::Peer(quint16 readPort, quint16 writePort)
     : MessageServer(Global::firstIPv4Address("localhost"), readPort, writePort, 0)
 {
@@ -34,7 +36,7 @@ bool Peer::waitForMessage(unsigned long timeout)
     return m_handler->waitForMessage(timeout);
 }
 
-QSharedPointer<Message> Peer::lastMessageReceived() const
+QSharedPointer<Message> Peer::messageReceived() const
 {
     return m_handler->dequeueMessage();
 }

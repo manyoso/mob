@@ -92,7 +92,7 @@ void TestMessage::sendMessage()
     Generic msg;
     QVERIFY(peer1.sendMessage(msg) == true);
     QVERIFY(peer2.waitForMessage() == true);
-    QVERIFY(msg.type() == peer2.lastMessageReceived()->type());
+    QVERIFY(msg.type() == peer2.messageReceived()->type());
 }
 
 void TestMessage::sendLargeMessage()
@@ -112,7 +112,7 @@ void TestMessage::sendLargeMessage()
     QVERIFY(peer1.sendMessage(msg) == true);
     QVERIFY(peer2.waitForMessage() == true);
 
-    QSharedPointer<Message> out = peer2.lastMessageReceived();
+    QSharedPointer<Message> out = peer2.messageReceived();
     QVERIFY(out->type() == msg.type());
     if (out->type() == msg.type()) {
         QSharedPointer<RawData> raw = out.staticCast<RawData>();

@@ -20,7 +20,7 @@ void TestNode::sendNodeMessage()
     QVERIFY(peer1.sendMessage(msg) == true);
     QVERIFY(peer2.waitForMessage() == true);
 
-    QSharedPointer<Message> out = peer2.lastMessageReceived();
+    QSharedPointer<Message> out = peer2.messageReceived();
     QVERIFY(out->type() == msg.type());
     if (out->type() == msg.type()) {
         QSharedPointer<NodeInfo> info = out.staticCast<NodeInfo>();

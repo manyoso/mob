@@ -16,7 +16,7 @@ public:
 
     bool sendMessage(const Message& msg);
     bool waitForMessage(unsigned long timeout = ULONG_MAX);
-    QSharedPointer<Message> lastMessageReceived() const;
+    QSharedPointer<Message> messageReceived() const;
 
 private slots:
     bool sendMessageInternal(const Message& msg);
