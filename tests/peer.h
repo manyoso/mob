@@ -20,7 +20,6 @@ public:
 
 private slots:
     bool sendMessageInternal(const Message& msg);
-    bool waitForMessageInternal(unsigned long timeout);
 
 private:
     QSharedPointer<MessageHandler> m_handler;

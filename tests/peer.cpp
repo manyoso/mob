@@ -31,9 +31,7 @@ bool Peer::sendMessage(const Message& msg)
 
 bool Peer::waitForMessage(unsigned long timeout)
 {
-    bool r;
-    QMetaObject::invokeMethod(this, "waitForMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r), Q_ARG(unsigned long, timeout));
-    return r;
+    return m_handler->waitForMessage(timeout);
 }
 
 QSharedPointer<Message> Peer::lastMessageReceived() const
@@ -44,9 +42,4 @@ QSharedPointer<Message> Peer::lastMessageReceived() const
 bool Peer::sendMessageInternal(const Message& msg)
 {
     return MessageServer::sendMessage(msg, QHostAddress::LocalHost, false);
-}
-
-bool Peer::waitForMessageInternal(unsigned long timeout)
-{
-    return m_handler->waitForMessage(timeout);
 }
