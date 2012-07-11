@@ -279,11 +279,6 @@ MessageServer::~MessageServer()
 {
 }
 
-bool MessageServer::isRunning() const
-{
-    return d->isListening();
-}
-
 quint16 MessageServer::readPort() const
 {
     return d->m_readPort;
@@ -296,7 +291,7 @@ quint16 MessageServer::writePort() const
 
 bool MessageServer::sendMessage(const Message& msg, const QHostAddress& address, bool sync)
 {
-    if (!isRunning()) {
+    if (!d->isListening()) {
         qDebug() << "ERROR: Cannot send a message because the TCP server is not running!";
         return false;
     }
