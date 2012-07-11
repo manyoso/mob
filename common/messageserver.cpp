@@ -1,10 +1,11 @@
 #include "messageserver.h"
 
-#include "node.h"
-
 #include <QtCore/QCoreApplication>
 #include <QtCore/QThread>
 #include <QtCore/QTime>
+
+#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 
 #define DEBUG_MESSAGESERVER 0
 
@@ -21,7 +22,7 @@ protected:
     virtual void run();
 
 private:
-    friend class MessageServer;
+    friend class MessageServerPrivate;
     MessageThread(int socketDescriptor);
     void readSocket(QTcpSocket* socket);
 
@@ -129,69 +130,154 @@ void MessageThread::readSocket(QTcpSocket* socket)
     emit receivedMessage(msg, m_address);
 }
 
-struct MessageServerPrivate {
-    MessageServerPrivate(const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort)
-        : m_networkAddress(address)
-        , m_readPort(readPort)
-        , m_writePort(writePort)
-        , m_tcpSocket(0)
-    { }
+class MessageServerPrivate : public QTcpServer {
+    Q_OBJECT
+public:
+    MessageServerPrivate(MessageServer* parent, const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort);
+    virtual ~MessageServerPrivate();
 
-    ~MessageServerPrivate()
-    {
-        m_handlers.clear();
-        m_threads.clear();
-    }
+    MessageServer* server() const { return qobject_cast<MessageServer*>(parent()); }
+
+    // Reimplemented from QTcpServer
+    virtual void incomingConnection(int socketDescriptor);
 
     QNetworkAddressEntry m_networkAddress;
     quint16 m_readPort;
     quint16 m_writePort;
+    QTcpSocket *m_tcpServer;
     QTcpSocket *m_tcpSocket;
     QHash< QHostAddress, QWeakPointer<MessageHandler> > m_handlers;
     QSet< QSharedPointer<MessageThread> > m_threads;
+
+public slots:
+    void messageThreadFinished();
+    void socketError(QAbstractSocket::SocketError);
+    void connectedSocketError(QAbstractSocket::SocketError);
+    void incomingConnectionInternal(const QHostAddress&);
+    void receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&);
 };
 
-MessageServer::MessageServer(const QNetworkAddressEntry& address, quint16 port, QObject* parent)
+MessageServerPrivate::MessageServerPrivate(MessageServer* parent, const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort)
     : QTcpServer(parent)
-    , d(new MessageServerPrivate(address, port, port))
-{
-    init();
-}
-
-MessageServer::MessageServer(const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort, QObject* parent)
-    : QTcpServer(parent)
-    , d(new MessageServerPrivate(address, readPort, writePort))
-{
-    init();
-}
-
-MessageServer::~MessageServer()
-{
-    delete d;
-    d = 0;
-}
-
-void MessageServer::init()
+    , m_networkAddress(address)
+    , m_readPort(readPort)
+    , m_writePort(writePort)
+    , m_tcpServer(0)
+    , m_tcpSocket(0)
 {
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType< QSharedPointer<Message> >("QSharedPointer<Message>");
     qRegisterMetaType< QSharedPointer<Message> >("QSharedPointer<MessageThread>");
     qRegisterMetaType< QHostAddress >("QHostAddress");
 
-    if (!listen(QHostAddress::Any, readPort())) {
+    // Listens for incoming messages
+    if (!listen(QHostAddress::Any, m_readPort)) {
         qDebug() << "ERROR: Could not start the TCP server!";
         exit(1);
     }
 
     // Writes outgoing messages
-    d->m_tcpSocket = new QTcpSocket(this);
-    connect(d->m_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)),
+    m_tcpSocket = new QTcpSocket(this);
+    connect(m_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)),
             this, SLOT(socketError(QAbstractSocket::SocketError)));
+}
+
+MessageServerPrivate::~MessageServerPrivate()
+{
+    m_handlers.clear();
+    m_threads.clear();
+}
+
+void MessageServerPrivate::incomingConnection(int socketDescriptor)
+{
+    QSharedPointer<MessageThread> thread(new MessageThread(socketDescriptor));
+    connect(thread.data(), SIGNAL(finished()), this, SLOT(messageThreadFinished()));
+    connect(thread.data(), SIGNAL(terminated()), this, SLOT(messageThreadFinished()));
+    connect(thread.data(), SIGNAL(socketError(QAbstractSocket::SocketError)),
+            this, SLOT(connectedSocketError(QAbstractSocket::SocketError)));
+    connect(thread.data(), SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
+            this, SLOT(receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
+    connect(thread.data(), SIGNAL(incomingConnection(const QHostAddress&)),
+            this, SLOT(incomingConnectionInternal(const QHostAddress&)), Qt::DirectConnection);
+
+    m_threads.insert(thread);
+    thread->start();
+}
+
+void MessageServerPrivate::socketError(QAbstractSocket::SocketError error)
+{
+    qDebug() << "ERROR: socket error" << error;
+}
+
+void MessageServerPrivate::connectedSocketError(QAbstractSocket::SocketError error)
+{
+    // We expect the remote host to close this connection so ignore the error
+    if (error == QAbstractSocket::RemoteHostClosedError)
+        return;
+
+    qDebug() << "ERROR: connected socket error" << error;
+}
+
+void MessageServerPrivate::messageThreadFinished()
+{
+    QWeakPointer<MessageThread> thread(qobject_cast<MessageThread*>(sender()));
+    Q_ASSERT(m_threads.contains(thread));
+    m_threads.remove(thread);
+}
+
+void MessageServerPrivate::incomingConnectionInternal(const QHostAddress& address)
+{
+    emit server()->incomingConnection(address);
+
+    QList< QWeakPointer<MessageHandler> > handlers1 = m_handlers.values(QHostAddress::Any);
+    foreach (QWeakPointer<MessageHandler> handler, handlers1) {
+        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
+        if (strong) strong->incomingConnectionInternal(address);
+    }
+
+    QList< QWeakPointer<MessageHandler> > handlers2 = m_handlers.values(address);
+    foreach (QWeakPointer<MessageHandler> handler, handlers2) {
+        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
+        if (strong) strong->incomingConnectionInternal(address);
+    }
+}
+
+void MessageServerPrivate::receivedMessageInternal(QSharedPointer<Message> msg,  const QHostAddress& address)
+{
+    emit server()->receivedMessage(msg, address);
+
+    QList< QWeakPointer<MessageHandler> > handlers1 = m_handlers.values(QHostAddress::Any);
+    foreach (QWeakPointer<MessageHandler> handler, handlers1) {
+        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
+        if (strong) strong->receivedMessageInternal(msg, address);
+    }
+
+    QList< QWeakPointer<MessageHandler> > handlers2 = m_handlers.values(address);
+    foreach (QWeakPointer<MessageHandler> handler, handlers2) {
+        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
+        if (strong) strong->receivedMessageInternal(msg, address);
+    }
+}
+
+MessageServer::MessageServer(const QNetworkAddressEntry& address, quint16 port, QObject* parent)
+    : QObject(parent)
+    , d(new MessageServerPrivate(this, address, port, port))
+{
+}
+
+MessageServer::MessageServer(const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort, QObject* parent)
+    : QObject(parent)
+    , d(new MessageServerPrivate(this, address, readPort, writePort))
+{
+}
+
+MessageServer::~MessageServer()
+{
 }
 
 bool MessageServer::isRunning() const
 {
-    return isListening();
+    return d->isListening();
 }
 
 quint16 MessageServer::readPort() const
@@ -248,77 +334,6 @@ bool MessageServer::sendMessage(const Message& msg, const QHostAddress& address,
 void MessageServer::installMessageHandler(QSharedPointer<MessageHandler> handler, const QHostAddress& address)
 {
     d->m_handlers.insertMulti(address, handler);
-}
-
-void MessageServer::socketError(QAbstractSocket::SocketError error)
-{
-    qDebug() << "ERROR: socket error" << error;
-}
-
-void MessageServer::connectedSocketError(QAbstractSocket::SocketError error)
-{
-    // We expect the remote host to close this connection so ignore the error
-    if (error == QAbstractSocket::RemoteHostClosedError)
-        return;
-
-    qDebug() << "ERROR: connected socket error" << error;
-}
-
-void MessageServer::incomingConnection(int socketDescriptor)
-{
-    QSharedPointer<MessageThread> thread(new MessageThread(socketDescriptor));
-    connect(thread.data(), SIGNAL(finished()), this, SLOT(messageThreadFinished()));
-    connect(thread.data(), SIGNAL(terminated()), this, SLOT(messageThreadFinished()));
-    connect(thread.data(), SIGNAL(socketError(QAbstractSocket::SocketError)),
-            this, SLOT(connectedSocketError(QAbstractSocket::SocketError)));
-    connect(thread.data(), SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
-            this, SLOT(receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
-    connect(thread.data(), SIGNAL(incomingConnection(const QHostAddress&)),
-            this, SLOT(incomingConnectionInternal(const QHostAddress&)), Qt::DirectConnection);
-
-    d->m_threads.insert(thread);
-    thread->start();
-}
-
-void MessageServer::messageThreadFinished()
-{
-    QWeakPointer<MessageThread> thread(qobject_cast<MessageThread*>(sender()));
-    Q_ASSERT(d->m_threads.contains(thread));
-    d->m_threads.remove(thread);
-}
-
-void MessageServer::incomingConnectionInternal(const QHostAddress& address)
-{
-    emit incomingConnection(address);
-
-    QList< QWeakPointer<MessageHandler> > handlers1 = d->m_handlers.values(QHostAddress::Any);
-    foreach (QWeakPointer<MessageHandler> handler, handlers1) {
-        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
-        if (strong) strong->incomingConnectionInternal(address);
-    }
-
-    QList< QWeakPointer<MessageHandler> > handlers2 = d->m_handlers.values(address);
-    foreach (QWeakPointer<MessageHandler> handler, handlers2) {
-        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
-        if (strong) strong->incomingConnectionInternal(address);
-    }
-}
-
-void MessageServer::receivedMessageInternal(QSharedPointer<Message> msg,  const QHostAddress& address)
-{
-    emit receivedMessage(msg, address);
-
-    QList< QWeakPointer<MessageHandler> > handlers1 = d->m_handlers.values(QHostAddress::Any);
-    foreach (QWeakPointer<MessageHandler> handler, handlers1) {
-        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
-        if (strong) strong->receivedMessageInternal(msg, address);
-    }
-
-    QList< QWeakPointer<MessageHandler> > handlers2 = d->m_handlers.values(address);
-    foreach (QWeakPointer<MessageHandler> handler, handlers2) {
-        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
-        if (strong) strong->receivedMessageInternal(msg, address);
-    }
 }
 
 #include "messageserver.moc"

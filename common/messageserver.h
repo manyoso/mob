@@ -4,18 +4,18 @@
 #include "message.h"
 #include "messagehandler.h"
 
+#include <QtCore/QObject>
 #include <QtCore/QSharedPointer>
 
+#include <QtNetwork/QAbstractSocket>
 #include <QtNetwork/QNetworkAddressEntry>
-#include <QtNetwork/QTcpServer>
-#include <QtNetwork/QTcpSocket>
 
 Q_DECLARE_METATYPE(QAbstractSocket::SocketError);
 Q_DECLARE_METATYPE(QSharedPointer<Message>);
 Q_DECLARE_METATYPE(QHostAddress);
 
 class MessageServerPrivate;
-class MessageServer : public QTcpServer {
+class MessageServer : public QObject {
     Q_OBJECT
 public:
     MessageServer(const QNetworkAddressEntry& address, quint16 port, QObject* parent);
@@ -45,18 +45,8 @@ signals:
     void incomingConnection(const QHostAddress&);
     void receivedMessage(QSharedPointer<Message>, const QHostAddress&);
 
-protected:
-    virtual void incomingConnection(int);
-
-private slots:
-    void messageThreadFinished();
-    void socketError(QAbstractSocket::SocketError);
-    void connectedSocketError(QAbstractSocket::SocketError);
-    void incomingConnectionInternal(const QHostAddress&);
-    void receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&);
-
 private:
-    void init();
+    friend class MessageServerPrivate;
     MessageServerPrivate* d;
 };
 

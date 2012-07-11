@@ -22,7 +22,7 @@ signals:
     void receivedMessage(QSharedPointer<Message>, const QHostAddress&);
 
 private:
-    friend class MessageServer;
+    friend class MessageServerPrivate;
     void incomingConnectionInternal(const QHostAddress&);
     void receivedMessageInternal(QSharedPointer<Message>,  const QHostAddress&);
 
