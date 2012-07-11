@@ -25,6 +25,7 @@ typedef Message* (*MessageFactory)();
 class Message : public QObject {
     Q_OBJECT
     Q_ENUMS(Type)
+    Q_PROPERTY(QByteArray sessionId READ sessionId WRITE setSessionId)
 public:
     enum Type {
         NodeInfo = 0
@@ -36,8 +37,12 @@ public:
     static MessageFactory installMessageFactory(Message::Type, MessageFactory);
 
     Type type() const { return m_type; }
+
     QHostAddress origin() const { return m_origin; }
     void setOrigin(const QHostAddress& origin) { m_origin = origin; }
+
+    const QByteArray& sessionId() const { return m_sessionId; }
+    void setSessionId(const QByteArray& id) { m_sessionId = id; }
 
     virtual bool serialize(QIODevice* device) const;
     virtual bool deserialize(QIODevice* device);
@@ -54,6 +59,7 @@ protected:
 private:
     Type m_type;
     QHostAddress m_origin;
+    QByteArray m_sessionId;
 };
 
 QDataStream& operator<<(QDataStream&, const Message&);

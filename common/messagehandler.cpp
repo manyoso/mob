@@ -5,40 +5,40 @@
 #define DEBUG_MESSAGEHANDLER 0
 
 MessageFilter::MessageFilter()
-    : m_messageId(QByteArray())
-    , m_messageType(Message::Type(-1))
-    , m_address(QHostAddress::Any)
+    : m_sessionId(QByteArray())
+    , m_type(Message::Type(-1))
+    , m_origin(QHostAddress::Any)
 {
 }
 
-QByteArray MessageFilter::messageId() const
+QByteArray MessageFilter::sessionId() const
 {
-    return m_messageId;
+    return m_sessionId;
 }
 
-void MessageFilter::setMessageId(const QByteArray& id)
+void MessageFilter::setSessionId(const QByteArray& id)
 {
-    m_messageId = id;
+    m_sessionId = id;
 }
 
-Message::Type MessageFilter::messageType() const
+Message::Type MessageFilter::type() const
 {
-    return m_messageType;
+    return m_type;
 }
 
-void MessageFilter::setMessageType(Message::Type type)
+void MessageFilter::setType(Message::Type type)
 {
-    m_messageType = type;
+    m_type = type;
 }
 
-QHostAddress MessageFilter::address() const
+QHostAddress MessageFilter::origin() const
 {
-    return m_address;
+    return m_origin;
 }
 
-void MessageFilter::setAddress(const QHostAddress& address)
+void MessageFilter::setOrigin(const QHostAddress& origin)
 {
-    m_address = address;
+    m_origin = origin;
 }
 
 MessageHandler::MessageHandler()

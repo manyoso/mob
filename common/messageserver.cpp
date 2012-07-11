@@ -219,26 +219,26 @@ void MessageServerPrivate::receivedMessageInternal(QSharedPointer<Message> msg)
 {
     // Full filter
     MessageFilter filter;
-    filter.setMessageId(QByteArray()); // FIXME: Reserve this for later
-    filter.setMessageType(msg->type());
-    filter.setAddress(msg->origin());
+    filter.setSessionId(msg->sessionId());
+    filter.setType(msg->type());
+    filter.setOrigin(msg->origin());
 
     if (receivedMessageInternal(msg, filter))
         return;
 
-    // From any address
-    filter.setAddress(QHostAddress::Any);
+    // From any origin
+    filter.setOrigin(QHostAddress::Any);
 
     if (receivedMessageInternal(msg, filter))
         return;
 
-    // With any message type
-    filter.setMessageType(Message::Type(-1));
+    // With any type
+    filter.setType(Message::Type(-1));
     if (receivedMessageInternal(msg, filter))
         return;
 
-    // With any message id
-    filter.setMessageId(QByteArray());
+    // With any session id
+    filter.setSessionId(QByteArray());
     if (receivedMessageInternal(msg, filter))
         return;
 

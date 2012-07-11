@@ -7,9 +7,10 @@ private slots:
     void initTestCase();
     void cleanupTestCase();
 
-    void sendMessage();
-    void sendLargeMessage();
+    void testSendMessage();
+    void testSendLargeMessage();
     void testMessageWaitTimeout();
+    void testMessageFilter();
 
 private:
     TestMessagePrivate* d;

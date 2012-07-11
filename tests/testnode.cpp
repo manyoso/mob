@@ -3,7 +3,7 @@
 #include "node.h"
 #include "peer.h"
 
-void TestNode::sendNodeMessage()
+void TestNode::testSendNodeMessage()
 {
     Peer peer1(1111, 2222);
     QVERIFY(peer1.readPort() == 1111);
@@ -13,14 +13,18 @@ void TestNode::sendNodeMessage()
     QVERIFY(peer2.readPort() == 2222);
     QVERIFY(peer2.writePort() == 1111);
 
+    QSharedPointer<MessageHandler> handler(new MessageHandler);
+    peer2.installMessageHandler(handler, MessageFilter());
+
     Node node(true /*isLocal*/, QHostAddress::LocalHost);
     NodeInfo msg;
     msg.setAddress(node.address().toIPv4Address());
     msg.setScheduler(node.scheduler());
     QVERIFY(peer1.sendMessage(msg) == true);
-    QVERIFY(peer2.waitForMessage() == true);
 
-    QSharedPointer<Message> out = peer2.messageReceived();
+    QVERIFY(handler->waitForMessage() == true);
+    QVERIFY(handler->messageCount() == 1);
+    QSharedPointer<Message> out = handler->dequeueMessage();
     QVERIFY(out->type() == msg.type());
     if (out->type() == msg.type()) {
         QSharedPointer<NodeInfo> info = out.staticCast<NodeInfo>();

@@ -4,7 +4,6 @@
 #include <QtCore/QThread>
 #include <QtTest/QtTest>
 
-#include "global.h"
 #include "message.h"
 #include "messageserver.h"
 
@@ -15,15 +14,11 @@ public:
     virtual ~Peer();
 
     bool sendMessage(const Message& msg);
-    bool waitForMessage(unsigned long timeout = ULONG_MAX);
-    QSharedPointer<Message> messageReceived() const;
 
 private slots:
     bool sendMessageInternal(const Message& msg);
 
 private:
-    QSharedPointer<MessageHandler> m_handler;
-    QSharedPointer<Message> m_message;
     QThread* m_thread;
 };
 

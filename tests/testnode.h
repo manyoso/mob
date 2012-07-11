@@ -3,5 +3,5 @@
 class TestNode: public QObject {
     Q_OBJECT
 private slots:
-    void sendNodeMessage();
+    void testSendNodeMessage();
 };

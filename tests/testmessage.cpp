@@ -79,7 +79,7 @@ void TestMessage::cleanupTestCase()
     d = 0;
 }
 
-void TestMessage::sendMessage()
+void TestMessage::testSendMessage()
 {
     Peer peer1(1111, 2222);
     QVERIFY(peer1.readPort() == 1111);
@@ -88,14 +88,20 @@ void TestMessage::sendMessage()
     Peer peer2(2222, 1111);
     QVERIFY(peer2.readPort() == 2222);
     QVERIFY(peer2.writePort() == 1111);
+
+    QSharedPointer<MessageHandler> handler(new MessageHandler);
+    peer2.installMessageHandler(handler, MessageFilter());
 
     Generic msg;
     QVERIFY(peer1.sendMessage(msg) == true);
-    QVERIFY(peer2.waitForMessage() == true);
-    QVERIFY(msg.type() == peer2.messageReceived()->type());
+
+    QVERIFY(handler->waitForMessage() == true);
+    QVERIFY(handler->messageCount() == 1);
+    QSharedPointer<Message> out = handler->dequeueMessage();
+    QVERIFY(msg.type() == out->type());
 }
 
-void TestMessage::sendLargeMessage()
+void TestMessage::testSendLargeMessage()
 {
     Peer peer1(1111, 2222);
     QVERIFY(peer1.readPort() == 1111);
@@ -104,15 +110,19 @@ void TestMessage::sendLargeMessage()
     Peer peer2(2222, 1111);
     QVERIFY(peer2.readPort() == 2222);
     QVERIFY(peer2.writePort() == 1111);
+
+    QSharedPointer<MessageHandler> handler(new MessageHandler);
+    peer2.installMessageHandler(handler, MessageFilter());
 
     QByteArray data;
     data.fill('X', 1024 * 1024);
     RawData msg;
     msg.setData(data);
     QVERIFY(peer1.sendMessage(msg) == true);
-    QVERIFY(peer2.waitForMessage() == true);
 
-    QSharedPointer<Message> out = peer2.messageReceived();
+    QVERIFY(handler->waitForMessage() == true);
+    QVERIFY(handler->messageCount() == 1);
+    QSharedPointer<Message> out = handler->dequeueMessage();
     QVERIFY(out->type() == msg.type());
     if (out->type() == msg.type()) {
         QSharedPointer<RawData> raw = out.staticCast<RawData>();
@@ -125,7 +135,13 @@ void TestMessage::testMessageWaitTimeout()
     Peer peer2(2222, 1111);
     QVERIFY(peer2.readPort() == 2222);
     QVERIFY(peer2.writePort() == 1111);
-    QVERIFY(peer2.waitForMessage(0) == false);
+    QSharedPointer<MessageHandler> handler(new MessageHandler);
+    peer2.installMessageHandler(handler, MessageFilter());
+    QVERIFY(handler->waitForMessage(0) == false);
+}
+
+void TestMessage::testMessageFilter()
+{
 }
 
 #include "testmessage.moc"
