@@ -225,32 +225,42 @@ void MessageServerPrivate::messageThreadFinished()
 
 void MessageServerPrivate::incomingConnectionInternal(const QHostAddress& address)
 {
-    QList< QWeakPointer<MessageHandler> > handlers1 = m_handlers.values(QHostAddress::Any);
-    foreach (QWeakPointer<MessageHandler> handler, handlers1) {
+    if (m_handlers.contains(QHostAddress::Any)) {
+        QWeakPointer<MessageHandler> handler = m_handlers.value(QHostAddress::Any);
         QSharedPointer<MessageHandler> strong = handler.toStrongRef();
-        if (strong) strong->incomingConnectionInternal(address);
+        if (strong) {
+            strong->incomingConnectionInternal(address);
+            return;
+        }
     }
 
-    QList< QWeakPointer<MessageHandler> > handlers2 = m_handlers.values(address);
-    foreach (QWeakPointer<MessageHandler> handler, handlers2) {
-        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
-        if (strong) strong->incomingConnectionInternal(address);
-    }
+    if (!m_handlers.contains(address))
+        return;
+
+    QWeakPointer<MessageHandler> handler = m_handlers.value(QHostAddress::Any);
+    QSharedPointer<MessageHandler> strong = handler.toStrongRef();
+    if (strong)
+        strong->incomingConnectionInternal(address);
 }
 
 void MessageServerPrivate::receivedMessageInternal(QSharedPointer<Message> msg,  const QHostAddress& address)
 {
-    QList< QWeakPointer<MessageHandler> > handlers1 = m_handlers.values(QHostAddress::Any);
-    foreach (QWeakPointer<MessageHandler> handler, handlers1) {
+    if (m_handlers.contains(QHostAddress::Any)) {
+        QWeakPointer<MessageHandler> handler = m_handlers.value(QHostAddress::Any);
         QSharedPointer<MessageHandler> strong = handler.toStrongRef();
-        if (strong) strong->receivedMessageInternal(msg, address);
+        if (strong) {
+            strong->receivedMessageInternal(msg, address);
+            return;
+        }
     }
 
-    QList< QWeakPointer<MessageHandler> > handlers2 = m_handlers.values(address);
-    foreach (QWeakPointer<MessageHandler> handler, handlers2) {
-        QSharedPointer<MessageHandler> strong = handler.toStrongRef();
-        if (strong) strong->receivedMessageInternal(msg, address);
-    }
+    if (!m_handlers.contains(address))
+        return;
+
+    QWeakPointer<MessageHandler> handler = m_handlers.value(QHostAddress::Any);
+    QSharedPointer<MessageHandler> strong = handler.toStrongRef();
+    if (strong)
+        strong->receivedMessageInternal(msg, address);
 }
 
 MessageServer::MessageServer(const QNetworkAddressEntry& address, quint16 port, QObject* parent)
@@ -327,7 +337,7 @@ bool MessageServer::sendMessage(const Message& msg, const QHostAddress& address,
 
 void MessageServer::installMessageHandler(QSharedPointer<MessageHandler> handler, const QHostAddress& address)
 {
-    d->m_handlers.insertMulti(address, handler);
+    d->m_handlers.insert(address, handler);
 }
 
 #include "messageserver.moc"
