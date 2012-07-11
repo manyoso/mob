@@ -4,10 +4,7 @@ Peer::Peer(quint16 readPort, quint16 writePort)
     : MessageServer(Global::firstIPv4Address("localhost"), readPort, writePort, 0)
 {
     m_handler = QSharedPointer<MessageHandler>(new MessageHandler());
-    connect(m_handler.data(), SIGNAL(receivedMessage(QSharedPointer<Message>, const QHostAddress&)),
-            this, SLOT(handleMessage(QSharedPointer<Message>, const QHostAddress&)), Qt::DirectConnection);
-
-    installMessageHandler(m_handler);
+    installMessageHandler(m_handler, MessageFilter());
 
     m_thread = new QThread(this);
     moveToThread(m_thread);
@@ -32,12 +29,7 @@ bool Peer::sendMessage(const Message& msg)
     return r;
 }
 
-void Peer::expectMessage()
-{
-    QMetaObject::invokeMethod(this, "expectMessageInternal", Qt::BlockingQueuedConnection);
-}
-
-bool Peer::blockForMessage(unsigned long timeout)
+bool Peer::waitForMessage(unsigned long timeout)
 {
     bool r;
     QMetaObject::invokeMethod(this, "waitForMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r), Q_ARG(unsigned long, timeout));
@@ -46,7 +38,7 @@ bool Peer::blockForMessage(unsigned long timeout)
 
 QSharedPointer<Message> Peer::lastMessageReceived() const
 {
-    return m_message;
+    return m_handler->dequeueMessage();
 }
 
 bool Peer::sendMessageInternal(const Message& msg)
@@ -54,18 +46,7 @@ bool Peer::sendMessageInternal(const Message& msg)
     return MessageServer::sendMessage(msg, QHostAddress::LocalHost, false);
 }
 
-void Peer::expectMessageInternal()
-{
-    m_handler->expectMessage(QHostAddress::LocalHost);
-}
-
 bool Peer::waitForMessageInternal(unsigned long timeout)
 {
     return m_handler->waitForMessage(timeout);
-}
-
-void Peer::handleMessage(QSharedPointer<Message> msg, const QHostAddress& address)
-{
-    QVERIFY(address == QHostAddress::LocalHost);
-    m_message = msg;
 }

@@ -89,11 +89,9 @@ void TestMessage::sendMessage()
     QVERIFY(peer2.readPort() == 2222);
     QVERIFY(peer2.writePort() == 1111);
 
-    peer2.expectMessage();
-
     Generic msg;
     QVERIFY(peer1.sendMessage(msg) == true);
-    QVERIFY(peer2.blockForMessage() == true);
+    QVERIFY(peer2.waitForMessage() == true);
     QVERIFY(msg.type() == peer2.lastMessageReceived()->type());
 }
 
@@ -107,14 +105,12 @@ void TestMessage::sendLargeMessage()
     QVERIFY(peer2.readPort() == 2222);
     QVERIFY(peer2.writePort() == 1111);
 
-    peer2.expectMessage();
-
     QByteArray data;
     data.fill('X', 1024 * 1024);
     RawData msg;
     msg.setData(data);
     QVERIFY(peer1.sendMessage(msg) == true);
-    QVERIFY(peer2.blockForMessage() == true);
+    QVERIFY(peer2.waitForMessage() == true);
 
     QSharedPointer<Message> out = peer2.lastMessageReceived();
     QVERIFY(out->type() == msg.type());
@@ -129,8 +125,7 @@ void TestMessage::testMessageWaitTimeout()
     Peer peer2(2222, 1111);
     QVERIFY(peer2.readPort() == 2222);
     QVERIFY(peer2.writePort() == 1111);
-    peer2.expectMessage();
-    QVERIFY(peer2.blockForMessage(0) == false);
+    QVERIFY(peer2.waitForMessage(0) == false);
 }
 
 #include "testmessage.moc"

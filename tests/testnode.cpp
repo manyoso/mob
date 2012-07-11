@@ -13,14 +13,12 @@ void TestNode::sendNodeMessage()
     QVERIFY(peer2.readPort() == 2222);
     QVERIFY(peer2.writePort() == 1111);
 
-    peer2.expectMessage();
-
     Node node(true /*isLocal*/, QHostAddress::LocalHost);
     NodeInfo msg;
     msg.setAddress(node.address().toIPv4Address());
     msg.setScheduler(node.scheduler());
     QVERIFY(peer1.sendMessage(msg) == true);
-    QVERIFY(peer2.blockForMessage() == true);
+    QVERIFY(peer2.waitForMessage() == true);
 
     QSharedPointer<Message> out = peer2.lastMessageReceived();
     QVERIFY(out->type() == msg.type());

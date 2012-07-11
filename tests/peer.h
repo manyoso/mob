@@ -15,15 +15,12 @@ public:
     virtual ~Peer();
 
     bool sendMessage(const Message& msg);
-    void expectMessage();
-    bool blockForMessage(unsigned long timeout = ULONG_MAX);
+    bool waitForMessage(unsigned long timeout = ULONG_MAX);
     QSharedPointer<Message> lastMessageReceived() const;
 
 private slots:
     bool sendMessageInternal(const Message& msg);
-    void expectMessageInternal();
     bool waitForMessageInternal(unsigned long timeout);
-    void handleMessage(QSharedPointer<Message>, const QHostAddress&);
 
 private:
     QSharedPointer<MessageHandler> m_handler;

@@ -32,11 +32,12 @@ public:
       \brief Installs a message handler for messages received from host.
      * Note, the message handler is passed as a shared pointer, but this class does
      * not store a reference to this shared pointer. Only one message handler for
-     * a given host is installed at any one time.  If a message handler is installed
-     * for QHostAddress::Any, then all messages will go exclusively to this handler
-     * for instance.
+     * a given filter is installed at any one time.  If a message handler is installed
+     * for a given filter, then all messages will go exclusively to this handler
+     * for instance.  The filter matching will match from most specific to least
+     * specific. See the MessageFilter class documentation for details.
      */
-    void installMessageHandler(QSharedPointer<MessageHandler>, const QHostAddress& = QHostAddress::Any);
+    void installMessageHandler(QSharedPointer<MessageHandler>, const MessageFilter&);
 
 private:
     MessageServerPrivate* d;

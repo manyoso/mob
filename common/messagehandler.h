@@ -5,6 +5,7 @@
 
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
+#include <QtCore/QQueue>
 #include <QtCore/QSharedPointer>
 #include <QtCore/QWaitCondition>
 
@@ -45,29 +46,20 @@ public:
     MessageHandler();
     virtual ~MessageHandler();
 
-    void expectMessage(const QHostAddress&);
+    quint32 messageCount() const;
+    QSharedPointer<Message> dequeueMessage();
     bool waitForMessage(unsigned long timeout = ULONG_MAX);
-
-signals:
-    void incomingConnection(const QHostAddress&);
-    void receivedMessage(QSharedPointer<Message>, const QHostAddress&);
 
 private:
     friend class MessageServerPrivate;
-    void incomingConnectionInternal(const QHostAddress&);
-    void receivedMessageInternal(QSharedPointer<Message>,  const QHostAddress&);
+    void receivedMessageInternal(QSharedPointer<Message>);
 
 private:
-    bool m_connectWait;
-    QMutex m_connectWaitMutex;
-    QWaitCondition m_connectWaitCondition;
-
-    QHostAddress m_messageWait;
+    QQueue< QSharedPointer<Message> > m_messages;
     QMutex m_messageWaitMutex;
     QWaitCondition m_messageWaitCondition;
-};
 
-Q_DECLARE_METATYPE(QSharedPointer<Message>);
-Q_DECLARE_METATYPE(QHostAddress);
+
+};
 
 #endif // messagehandler_h

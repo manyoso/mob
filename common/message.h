@@ -36,6 +36,8 @@ public:
     static MessageFactory installMessageFactory(Message::Type, MessageFactory);
 
     Type type() const { return m_type; }
+    QHostAddress origin() const { return m_origin; }
+    void setOrigin(const QHostAddress& origin) { m_origin = origin; }
 
     virtual bool serialize(QIODevice* device) const;
     virtual bool deserialize(QIODevice* device);
@@ -51,6 +53,7 @@ protected:
 
 private:
     Type m_type;
+    QHostAddress m_origin;
 };
 
 QDataStream& operator<<(QDataStream&, const Message&);
