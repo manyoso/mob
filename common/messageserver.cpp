@@ -34,9 +34,6 @@ private:
     quint16 m_port;
 };
 
-Q_DECLARE_METATYPE(QAbstractSocket::SocketError);
-Q_DECLARE_METATYPE(QSharedPointer<MessageThread>);
-
 MessageThread::MessageThread(int socketDescriptor)
     : QThread(0)
     , m_socketDescriptor(socketDescriptor)
@@ -335,5 +332,8 @@ void MessageServer::installMessageHandler(QSharedPointer<MessageHandler> handler
 {
     d->m_handlers.insert(address, handler);
 }
+
+Q_DECLARE_METATYPE(QAbstractSocket::SocketError);
+Q_DECLARE_METATYPE(QSharedPointer<MessageThread>);
 
 #include "messageserver.moc"
