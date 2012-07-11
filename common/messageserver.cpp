@@ -133,10 +133,8 @@ void MessageThread::readSocket(QTcpSocket* socket)
 class MessageServerPrivate : public QTcpServer {
     Q_OBJECT
 public:
-    MessageServerPrivate(MessageServer* parent, const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort);
+    MessageServerPrivate(QObject* parent, const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort);
     virtual ~MessageServerPrivate();
-
-    MessageServer* server() const { return qobject_cast<MessageServer*>(parent()); }
 
     // Reimplemented from QTcpServer
     virtual void incomingConnection(int socketDescriptor);
@@ -157,7 +155,7 @@ public slots:
     void receivedMessageInternal(QSharedPointer<Message>, const QHostAddress&);
 };
 
-MessageServerPrivate::MessageServerPrivate(MessageServer* parent, const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort)
+MessageServerPrivate::MessageServerPrivate(QObject* parent, const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort)
     : QTcpServer(parent)
     , m_networkAddress(address)
     , m_readPort(readPort)
@@ -227,8 +225,6 @@ void MessageServerPrivate::messageThreadFinished()
 
 void MessageServerPrivate::incomingConnectionInternal(const QHostAddress& address)
 {
-    emit server()->incomingConnection(address);
-
     QList< QWeakPointer<MessageHandler> > handlers1 = m_handlers.values(QHostAddress::Any);
     foreach (QWeakPointer<MessageHandler> handler, handlers1) {
         QSharedPointer<MessageHandler> strong = handler.toStrongRef();
@@ -244,8 +240,6 @@ void MessageServerPrivate::incomingConnectionInternal(const QHostAddress& addres
 
 void MessageServerPrivate::receivedMessageInternal(QSharedPointer<Message> msg,  const QHostAddress& address)
 {
-    emit server()->receivedMessage(msg, address);
-
     QList< QWeakPointer<MessageHandler> > handlers1 = m_handlers.values(QHostAddress::Any);
     foreach (QWeakPointer<MessageHandler> handler, handlers1) {
         QSharedPointer<MessageHandler> strong = handler.toStrongRef();

@@ -41,12 +41,7 @@ public:
      */
     void installMessageHandler(QSharedPointer<MessageHandler>, const QHostAddress& = QHostAddress::Any);
 
-signals:
-    void incomingConnection(const QHostAddress&);
-    void receivedMessage(QSharedPointer<Message>, const QHostAddress&);
-
 private:
-    friend class MessageServerPrivate;
     MessageServerPrivate* d;
 };
 
