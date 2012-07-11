@@ -34,6 +34,7 @@ private:
     quint16 m_port;
 };
 
+Q_DECLARE_METATYPE(QAbstractSocket::SocketError);
 Q_DECLARE_METATYPE(QSharedPointer<MessageThread>);
 
 MessageThread::MessageThread(int socketDescriptor)

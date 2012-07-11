@@ -8,6 +8,9 @@
 #include <QtCore/QSharedPointer>
 #include <QtCore/QWaitCondition>
 
+Q_DECLARE_METATYPE(QSharedPointer<Message>);
+Q_DECLARE_METATYPE(QHostAddress);
+
 class MessageFilter {
 public:
     MessageFilter();

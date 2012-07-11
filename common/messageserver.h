@@ -10,10 +10,6 @@
 #include <QtNetwork/QAbstractSocket>
 #include <QtNetwork/QNetworkAddressEntry>
 
-Q_DECLARE_METATYPE(QAbstractSocket::SocketError);
-Q_DECLARE_METATYPE(QSharedPointer<Message>);
-Q_DECLARE_METATYPE(QHostAddress);
-
 class MessageServerPrivate;
 class MessageServer : public QObject {
     Q_OBJECT
