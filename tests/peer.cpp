@@ -21,14 +21,14 @@ Peer::~Peer()
     }
 }
 
-bool Peer::sendMessage(const Message& msg)
+bool Peer::sendMessage(const Message& msg, bool sync)
 {
     bool r;
-    QMetaObject::invokeMethod(this, "sendMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r), Q_ARG(const Message&, msg));
+    QMetaObject::invokeMethod(this, "sendMessageInternal", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, r), Q_ARG(const Message&, msg), Q_ARG(bool, sync));
     return r;
 }
 
-bool Peer::sendMessageInternal(const Message& msg)
+bool Peer::sendMessageInternal(const Message& msg, bool sync)
 {
-    return MessageServer::sendMessage(msg, QHostAddress::LocalHost, false);
+    return MessageServer::sendMessage(msg, QHostAddress::LocalHost, sync);
 }

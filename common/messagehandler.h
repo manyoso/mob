@@ -9,6 +9,24 @@
 #include <QtCore/QSharedPointer>
 #include <QtCore/QWaitCondition>
 
+/*!
+ * \brief The MessageFilter class is used to filter messages given a set of rules.
+ *
+ * Order of matching is from most specific to least specific defined as
+ * follows: session id (S), message type (T), origin (O). Thus the table
+ * below lists the possible filter matching rules in order of preference.
+ * Note that (_) is used as the wildcard marker and if a given message does
+ * not specify a session id, then only the last four rules will be evaluated.
+ *
+ * 1)  S T O
+ * 2)  S T _
+ * 3)  S _ O
+ * 4)  S _ _
+ * 5)  _ T O
+ * 6)  _ T _
+ * 7)  _ _ O
+ * 8)  _ _ _
+ */
 class MessageFilter {
 public:
     MessageFilter();
@@ -35,10 +53,17 @@ inline bool operator==(const MessageFilter &f1, const MessageFilter &f2)
         && f1.origin() == f2.origin();
 }
 
+inline bool operator!=(const MessageFilter &f1, const MessageFilter &f2)
+{
+    return !(f1 == f2);
+}
+
 inline uint qHash(const MessageFilter &key)
 {
     return qHash(key.sessionId()) ^ qHash(key.type()) ^ qHash(key.origin().toIPv4Address());
 }
+
+QDebug operator<<(QDebug, const MessageFilter&);
 
 class MessageHandler : public QObject {
     Q_OBJECT
@@ -58,8 +83,6 @@ private:
     QQueue< QSharedPointer<Message> > m_messages;
     QMutex m_messageWaitMutex;
     QWaitCondition m_messageWaitCondition;
-
-
 };
 
 #endif // messagehandler_h

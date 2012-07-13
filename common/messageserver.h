@@ -25,14 +25,14 @@ public:
     quint16 writePort() const;
 
     /*!
-      \brief Sends the message to the specified address.
+     * \brief Sends the message to the specified address.
      * If sync is true it will block until the message is sent and transmitting
      * over the wire.
      */
-     bool sendMessage(const Message& msg, const QHostAddress& address, bool sync = false);
+     bool sendMessage(const Message& msg, const QHostAddress& address, bool sync = true);
 
     /*!
-      \brief Installs a message handler for messages received from host.
+     * \brief Installs a message handler for messages received from host.
      * Note, the message handler is passed as a shared pointer, but this class does
      * not store a reference to this shared pointer. Only one message handler for
      * a given filter is installed at any one time.  If a message handler is installed

@@ -2,21 +2,38 @@
 
 #include "peer.h"
 
+#include <QtCore/QUuid>
+
 #define INSTALL_CUSTOM_MESSAGE_FACTORY(messageType, messageFactory) \
     static MessageFactory s_##messageType##Factory \
         = Message::installMessageFactory((Message::Type)messageType, messageFactory);
 
-static const quint8 GenericType = Message::NumberOfTypes + 1;
+static const quint8 GenericType1    = Message::NumberOfTypes;
+static const quint8 GenericType2    = Message::NumberOfTypes + 1;
+static const quint8 GenericType3    = Message::NumberOfTypes + 2;
+static const quint8 GenericType4    = Message::NumberOfTypes + 3;
+static const quint8 GenericType5    = Message::NumberOfTypes + 4;
+static const quint8 GenericType6    = Message::NumberOfTypes + 5;
+static const quint8 GenericType7    = Message::NumberOfTypes + 6;
+static const quint8 GenericType8    = Message::NumberOfTypes + 7;
+static const quint8 RawDataType     = Message::NumberOfTypes + 8;
+
 class Generic : public Message {
     Q_OBJECT
 public:
-    Generic() : Message((Message::Type)GenericType) {}
+    Generic(quint8 type = GenericType1) : Message((Message::Type)type) {}
     static Message* createMessage() { return new Generic; }
 };
 
-INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType, &Generic::createMessage);
+INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType1, &Generic::createMessage);
+INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType2, &Generic::createMessage);
+INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType3, &Generic::createMessage);
+INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType4, &Generic::createMessage);
+INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType5, &Generic::createMessage);
+INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType6, &Generic::createMessage);
+INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType7, &Generic::createMessage);
+INSTALL_CUSTOM_MESSAGE_FACTORY(GenericType8, &Generic::createMessage);
 
-static const quint8 RawDataType = Message::NumberOfTypes + 2;
 class RawData : public Message {
     Q_OBJECT
     Q_PROPERTY(QByteArray data READ data WRITE setData STORED false)
@@ -93,7 +110,7 @@ void TestMessage::testSendMessage()
     peer2.installMessageHandler(handler, MessageFilter());
 
     Generic msg;
-    QVERIFY(peer1.sendMessage(msg) == true);
+    QVERIFY(peer1.sendMessage(msg, false /*sync*/) == true);
 
     QVERIFY(handler->waitForMessage() == true);
     QVERIFY(handler->messageCount() == 1);
@@ -118,7 +135,7 @@ void TestMessage::testSendLargeMessage()
     data.fill('X', 1024 * 1024);
     RawData msg;
     msg.setData(data);
-    QVERIFY(peer1.sendMessage(msg) == true);
+    QVERIFY(peer1.sendMessage(msg, false /*sync*/) == true);
 
     QVERIFY(handler->waitForMessage() == true);
     QVERIFY(handler->messageCount() == 1);
@@ -142,6 +159,67 @@ void TestMessage::testMessageWaitTimeout()
 
 void TestMessage::testMessageFilter()
 {
+    Peer peer1(1111, 2222);
+    QVERIFY(peer1.readPort() == 1111);
+    QVERIFY(peer1.writePort() == 2222);
+
+    Peer peer2(2222, 1111);
+    QVERIFY(peer2.readPort() == 2222);
+    QVERIFY(peer2.writePort() == 1111);
+
+    const QUuid sessionId = QUuid::createUuid();
+
+    // Full filter
+    MessageFilter fullFilter;
+    fullFilter.setSessionId(sessionId.toByteArray());
+    fullFilter.setType(Message::Type(GenericType1));
+    fullFilter.setOrigin(QHostAddress::LocalHost);
+    QSharedPointer<MessageHandler> fullHandler(new MessageHandler);
+    peer2.installMessageHandler(fullHandler, fullFilter);
+
+    // With any type
+    MessageFilter anyType = fullFilter;
+    anyType.setType(Message::Type(-1));
+    QSharedPointer<MessageHandler> anyTypeHandler(new MessageHandler);
+    peer2.installMessageHandler(anyTypeHandler, anyType);
+
+    // With any session id
+    MessageFilter anySession = fullFilter;
+    anySession.setSessionId(QByteArray());
+    QSharedPointer<MessageHandler> anySessionHandler(new MessageHandler);
+    peer2.installMessageHandler(anySessionHandler, anySession);
+
+    // With any session id with any type
+    MessageFilter anySessionAnyType = anyType;
+    anySessionAnyType.setSessionId(QByteArray());
+    QSharedPointer<MessageHandler> anySessionAnyTypeHandler(new MessageHandler);
+    peer2.installMessageHandler(anySessionAnyTypeHandler, anySessionAnyType);
+
+    Generic msg1(GenericType1);
+    msg1.setSessionId(sessionId.toByteArray());
+    QVERIFY(peer1.sendMessage(msg1) == true); // for full filter
+
+    Generic msg2(GenericType2);
+    msg2.setSessionId(sessionId.toByteArray());
+    QVERIFY(peer1.sendMessage(msg2) == true); // for any type filter
+
+    Generic msg3(GenericType1);
+    QVERIFY(peer1.sendMessage(msg3) == true); // for any session filter
+
+    Generic msg4(GenericType2);
+    QVERIFY(peer1.sendMessage(msg4) == true); // for any session with any type filter
+
+    QVERIFY(fullHandler->waitForMessage() == true);
+    QVERIFY(fullHandler->messageCount() == 1);
+
+    QVERIFY(anyTypeHandler->waitForMessage() == true);
+    QVERIFY(anyTypeHandler->messageCount() == 1);
+
+    QVERIFY(anySessionHandler->waitForMessage() == true);
+    QVERIFY(anySessionHandler->messageCount() == 1);
+
+    QVERIFY(anySessionAnyTypeHandler->waitForMessage() == true);
+    QVERIFY(anySessionAnyTypeHandler->messageCount() == 1);
 }
 
 #include "testmessage.moc"

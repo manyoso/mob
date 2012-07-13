@@ -41,6 +41,12 @@ void MessageFilter::setOrigin(const QHostAddress& origin)
     m_origin = origin;
 }
 
+QDebug operator<<(QDebug d, const MessageFilter& filter)
+{
+    d.nospace() << "MessageFilter(" << filter.sessionId() << ", " << filter.type() << ", " << filter.origin().toIPv4Address() << ")";
+    return d.space();
+}
+
 MessageHandler::MessageHandler()
 {
 }

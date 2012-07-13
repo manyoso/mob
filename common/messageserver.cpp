@@ -217,29 +217,57 @@ void MessageServerPrivate::messageThreadFinished()
 
 void MessageServerPrivate::receivedMessageInternal(QSharedPointer<Message> msg)
 {
-    // Full filter
-    MessageFilter filter;
-    filter.setSessionId(msg->sessionId());
-    filter.setType(msg->type());
-    filter.setOrigin(msg->origin());
+    // See the inline documentation in messagehandler.h for the order of the rule
+    // matching below.
 
-    if (receivedMessageInternal(msg, filter))
+    // Full filter
+    MessageFilter fullFilter;
+    fullFilter.setSessionId(msg->sessionId());
+    fullFilter.setType(msg->type());
+    fullFilter.setOrigin(msg->origin());
+    if (receivedMessageInternal(msg, fullFilter))
         return;
 
     // From any origin
-    filter.setOrigin(QHostAddress::Any);
-
-    if (receivedMessageInternal(msg, filter))
+    MessageFilter anyOrigin = fullFilter;
+    anyOrigin.setOrigin(QHostAddress::Any);
+    if (receivedMessageInternal(msg, anyOrigin))
         return;
 
     // With any type
-    filter.setType(Message::Type(-1));
-    if (receivedMessageInternal(msg, filter))
+    MessageFilter anyType = fullFilter;
+    anyType.setType(Message::Type(-1));
+    if (receivedMessageInternal(msg, anyType))
         return;
 
-    // With any session id
-    filter.setSessionId(QByteArray());
-    if (receivedMessageInternal(msg, filter))
+    MessageFilter anySession = fullFilter;
+    anySession.setSessionId(QByteArray());
+    if (anySession != fullFilter) {
+        // With any type from any origin
+        MessageFilter anyTypeAnyOrigin = anyType;
+        anyTypeAnyOrigin.setOrigin(QHostAddress::Any);
+        if (receivedMessageInternal(msg, anyTypeAnyOrigin))
+            return;
+
+        // With any session id
+        if (receivedMessageInternal(msg, anySession))
+            return;
+
+        // With any session id from any origin
+        MessageFilter anySessionAnyOrigin = anyOrigin;
+        anySessionAnyOrigin.setSessionId(QByteArray());
+        if (receivedMessageInternal(msg, anySessionAnyOrigin))
+            return;
+
+        // With any session id with any type
+        MessageFilter anySessionAnyType = anyType;
+        anySessionAnyType.setSessionId(QByteArray());
+        if (receivedMessageInternal(msg, anySessionAnyType))
+            return;
+    }
+
+    // With any filter
+    if (receivedMessageInternal(msg, MessageFilter()))
         return;
 
     qDebug() << "ERROR: could not find a handler for message" << msg;

@@ -57,22 +57,27 @@ void Message::serialize(QTextStream& stream) const
 {
     const QMetaObject* object = metaObject();
     stream << object->className() << "(";
-    for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
-        if (i != object->propertyOffset())
-            stream << ", ";
-        QMetaProperty property = object->property(i);
-        QString name = property.name();
-        name.replace(0, 1, name.at(0).toUpper());
-        stream << name;
-        stream << ":";
-        QString value = property.read(this).toString();
-        if (value.length() > 10) {
-            value.truncate(10);
-            value.append("...");
+    bool firstProperty = true;
+    while (object && QLatin1String(object->className()) != QLatin1String("QObject")) {
+        for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
+            if (!firstProperty)
+                stream << ", ";
+            firstProperty = false;
+            QMetaProperty property = object->property(i);
+            QString name = property.name();
+            name.replace(0, 1, name.at(0).toUpper());
+            stream << name;
+            stream << ":";
+            QString value = property.read(this).toString();
+            if (value.length() > 10) {
+                value.truncate(10);
+                value.append("...");
+            }
+            if (value.isEmpty())
+                value = "0";
+            stream << value;
         }
-        if (value.isEmpty())
-            value = "0";
-        stream << value;
+        object = object->superClass();
     }
     stream << ")";
 }
@@ -81,10 +86,13 @@ void Message::serialize(QDataStream& stream) const
 {
     stream << (quint16)m_type;
     const QMetaObject* object = metaObject();
-    for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
-        QMetaProperty property = object->property(i);
-        if (property.isStored(this))
-            stream << property.read(this);
+    while (object && QLatin1String(object->className()) != QLatin1String("QObject")) {
+        for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
+            QMetaProperty property = object->property(i);
+            if (property.isStored(this))
+                stream << property.read(this);
+        }
+        object = object->superClass();
     }
 }
 
@@ -94,10 +102,13 @@ void Message::deserialize(QDataStream& stream)
     stream >> type;
     m_type = (Message::Type)type;
     const QMetaObject* object = metaObject();
-    for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
-        QMetaProperty property = object->property(i);
-        if (property.isStored(this))
-            property.write(this, stream);
+    while (object && QLatin1String(object->className()) != QLatin1String("QObject")) {
+        for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
+            QMetaProperty property = object->property(i);
+            if (property.isStored(this))
+                property.write(this, stream);
+        }
+        object = object->superClass();
     }
 }
 
@@ -125,7 +136,7 @@ QDataStream& operator>>(QDataStream& stream, Message& msg)
     return stream;
 }
 
-QDebug operator<<(QDebug d, const Message &msg)
+QDebug operator<<(QDebug d, const Message& msg)
 {
     QString data;
     QTextStream stream(&data);

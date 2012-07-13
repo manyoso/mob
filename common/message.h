@@ -25,7 +25,7 @@ typedef Message* (*MessageFactory)();
 class Message : public QObject {
     Q_OBJECT
     Q_ENUMS(Type)
-    Q_PROPERTY(QByteArray sessionId READ sessionId WRITE setSessionId)
+    Q_PROPERTY(const QByteArray& sessionId READ sessionId WRITE setSessionId)
 public:
     enum Type {
         NodeInfo = 0
@@ -64,6 +64,6 @@ private:
 
 QDataStream& operator<<(QDataStream&, const Message&);
 QDataStream& operator>>(QDataStream&, Message&);
-QDebug operator<<(QDebug, const Message &);
+QDebug operator<<(QDebug, const Message&);
 
 #endif // message_h
