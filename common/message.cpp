@@ -19,7 +19,10 @@ Message* Message::createMessage(Message::Type type)
     }
 
     MessageFactory factory = factories()->value(type);
-    return (*factory)();
+    Message* message = (*factory)();
+    if (message)
+        message->m_type = type;
+    return message;
 }
 
 MessageFactory Message::installMessageFactory(Message::Type type, MessageFactory factory)
@@ -84,7 +87,6 @@ void Message::serialize(QTextStream& stream) const
 
 void Message::serialize(QDataStream& stream) const
 {
-    stream << (quint16)m_type;
     const QMetaObject* object = metaObject();
     while (object && QLatin1String(object->className()) != QLatin1String("QObject")) {
         for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {
@@ -98,9 +100,6 @@ void Message::serialize(QDataStream& stream) const
 
 void Message::deserialize(QDataStream& stream)
 {
-    quint16 type;
-    stream >> type;
-    m_type = (Message::Type)type;
     const QMetaObject* object = metaObject();
     while (object && QLatin1String(object->className()) != QLatin1String("QObject")) {
         for(int i = object->propertyOffset(); i < object->propertyCount(); ++i) {

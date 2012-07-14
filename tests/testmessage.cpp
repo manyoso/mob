@@ -222,4 +222,13 @@ void TestMessage::testMessageFilter()
     QVERIFY(anySessionAnyTypeHandler->messageCount() == 1);
 }
 
+void TestMessage::testMessageSize()
+{
+    Generic msg;
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream << msg;
+    QVERIFY(bytes.size() == 9);
+}
+
 #include "testmessage.moc"

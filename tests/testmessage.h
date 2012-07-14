@@ -11,6 +11,7 @@ private slots:
     void testSendLargeMessage();
     void testMessageWaitTimeout();
     void testMessageFilter();
+    void testMessageSize();
 
 private:
     TestMessagePrivate* d;

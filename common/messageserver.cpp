@@ -278,7 +278,7 @@ void MessageServerPrivate::receivedMessageInternal(QSharedPointer<Message> msg)
     if (receivedMessageInternal(msg, MessageFilter()))
         return;
 
-    qDebug() << "ERROR: could not find a handler for message" << msg;
+    qDebug() << "ERROR: could not find a handler for message" << *msg.data();
     Q_ASSERT(false);
 }
 
