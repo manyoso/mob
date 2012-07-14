@@ -150,6 +150,11 @@ public slots:
     void connectedSocketError(QAbstractSocket::SocketError);
     void receivedMessageInternal(QSharedPointer<Message>);
     bool receivedMessageInternal(QSharedPointer<Message>, const MessageFilter&);
+    void installMessageHandler(QSharedPointer<MessageHandler>, const MessageFilter&);
+    void cleanMessageHandlers();
+
+private:
+    QMutex m_mutex;
 };
 
 MessageServerPrivate::MessageServerPrivate(QObject* parent, const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort)
@@ -177,6 +182,7 @@ MessageServerPrivate::MessageServerPrivate(QObject* parent, const QNetworkAddres
 
 MessageServerPrivate::~MessageServerPrivate()
 {
+    QMutexLocker locker(&m_mutex);
     m_handlers.clear();
     m_threads.clear();
 }
@@ -217,6 +223,8 @@ void MessageServerPrivate::messageThreadFinished()
 
 void MessageServerPrivate::receivedMessageInternal(QSharedPointer<Message> msg)
 {
+    QMutexLocker locker(&m_mutex);
+
     // See the inline documentation in messagehandler.h for the order of the rule
     // matching below.
 
@@ -289,6 +297,23 @@ bool MessageServerPrivate::receivedMessageInternal(QSharedPointer<Message> msg, 
     return false;
 }
 
+void MessageServerPrivate::installMessageHandler(QSharedPointer<MessageHandler> handler, const MessageFilter& filter)
+{
+    QMutexLocker locker(&m_mutex);
+    connect(handler.data(), SIGNAL(destroyed(QObject*)), this, SLOT(cleanMessageHandlers()), Qt::DirectConnection);
+    m_handlers.insert(filter, handler);
+}
+
+void MessageServerPrivate::cleanMessageHandlers()
+{
+    QMutexLocker locker(&m_mutex);
+    QHash< MessageFilter, QWeakPointer<MessageHandler> >::iterator it = m_handlers.begin();
+    for (; it != m_handlers.end(); ++it) {
+        if (!it.value())
+            m_handlers.erase(it);
+    }
+}
+
 MessageServer::MessageServer(const QNetworkAddressEntry& address, quint16 port, QObject* parent)
     : QObject(parent)
     , d(new MessageServerPrivate(this, address, port, port))
@@ -358,7 +383,7 @@ bool MessageServer::sendMessage(const Message& msg, const QHostAddress& address,
 
 void MessageServer::installMessageHandler(QSharedPointer<MessageHandler> handler, const MessageFilter& filter)
 {
-    d->m_handlers.insert(filter, handler);
+    d->installMessageHandler(handler, filter);
 }
 
 Q_DECLARE_METATYPE(QAbstractSocket::SocketError);
