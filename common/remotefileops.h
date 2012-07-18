@@ -1,11 +1,11 @@
-#ifndef localfile_h
-#define localfile_h
+#ifndef remotefileops_h
+#define remotefileops_h
 
-#include "fileoperations.h"
+#include "fileops.h"
 
-class LocalFile : public FileOperations {
+class RemoteFileOps : public FileOps {
 public:
-    LocalFile(Node* node) : FileOperations(node) {}
+    RemoteFileOps(Node* node) : FileOps(node) {}
 
     bool getattr(const QString& path, QFileInfo*) const;
     bool readlink(const QString& path, QTextStream& buffer) const;
@@ -32,4 +32,4 @@ public:
     bool utime(const QString& path, const QDateTime& acc, const QDateTime& mod) const;
 };
 
-#endif // localfile_h
+#endif // remotefileops_h

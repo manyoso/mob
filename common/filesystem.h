@@ -4,14 +4,13 @@
 #include <QtCore/QThread>
 
 class FileSystemPrivate;
-class Node;
+class RemoteFileOps;
 class FileSystem : public QThread {
     Q_OBJECT
 public:
-    FileSystem(Node* node);
+    FileSystem(RemoteFileOps* fileOps);
     ~FileSystem();
 
-    Node* node() const;
     QString mountPoint() const;
 
 protected:

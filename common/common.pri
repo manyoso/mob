@@ -2,23 +2,23 @@ INCLUDEPATH += $$PWD
 
 SOURCES += \
     $$PWD/global.cpp \
-    $$PWD/localfile.cpp \
+    $$PWD/localfileops.cpp \
     $$PWD/message.cpp \
     $$PWD/messagehandler.cpp \
     $$PWD/messageserver.cpp \
     $$PWD/node.cpp \
-    $$PWD/remotefile.cpp
+    $$PWD/remotefileops.cpp
 
 HEADERS += \
-    $$PWD/fileoperations.h \
+    $$PWD/fileops.h \
     $$PWD/filesystem.h \
     $$PWD/global.h \
-    $$PWD/localfile.h \
+    $$PWD/localfileops.h \
     $$PWD/message.h \
     $$PWD/messagehandler.h \
     $$PWD/messageserver.h \
     $$PWD/node.h \
-    $$PWD/remotefile.h
+    $$PWD/remotefileops.h
 
 linux-g++ {
     ### For FUSE

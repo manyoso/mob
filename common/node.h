@@ -5,7 +5,7 @@
 
 #include <QtNetwork/QHostAddress>
 
-class FileOperations;
+class FileOps;
 class FileSystem;
 
 class NodeInfo : public Message {
@@ -44,7 +44,7 @@ public:
     QHostAddress address() const { return m_address; }
 
     //! \brief Returns the file operations of this node
-    FileOperations* fileOperations() const { return m_fileOps; }
+    FileOps* fileOperations() const { return m_fileOps; }
 
     void startFileSystem();
     void stopFileSystem();
@@ -52,7 +52,7 @@ public:
 private:
     bool m_isLocal;
     QHostAddress m_address;
-    FileOperations* m_fileOps;
+    FileOps* m_fileOps;
     FileSystem* m_fileSystem;
 };
 

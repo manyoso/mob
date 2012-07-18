@@ -1,5 +1,5 @@
-#ifndef fileoperations_h
-#define fileoperations_h
+#ifndef fileops_h
+#define fileops_h
 
 #include <QtCore>
 
@@ -9,9 +9,9 @@ class Node;
  * A file operations interface.
  */
 
-class FileOperations {
+class FileOps {
 public:
-    FileOperations(Node* node) : m_node(node) {}
+    FileOps(Node* node) : m_node(node) {}
 
     Node* node() const { return m_node; }
 
@@ -43,4 +43,4 @@ private:
     Node* m_node;
 };
 
-#endif // fileoperations_h
+#endif // fileops_h

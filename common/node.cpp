@@ -2,19 +2,21 @@
 
 #include "filesystem.h"
 #include "global.h"
-#include "localfile.h"
-#include "remotefile.h"
+#include "localfileops.h"
+#include "remotefileops.h"
 
 Node::Node(bool isLocal, const QHostAddress& address)
     : m_isLocal(isLocal)
     , m_address(address)
+    , m_fileOps(0)
+    , m_fileSystem(0)
 {
     if (isLocal)
-        m_fileOps = new LocalFile(this);
-    else
-        m_fileOps = new RemoteFile(this);
-
-    m_fileSystem = new FileSystem(this);
+        m_fileOps = new LocalFileOps(this);
+    else {
+        m_fileOps = new RemoteFileOps(this);
+        m_fileSystem = new FileSystem(static_cast<RemoteFileOps*>(m_fileOps));
+    }
 }
 
 Node::~Node()
@@ -43,7 +45,7 @@ void Node::startFileSystem()
 
 void Node::stopFileSystem()
 {
-    if (!m_fileSystem->isRunning())
+    if (!m_fileSystem || !m_fileSystem->isRunning())
         return;
 
     Q_ASSERT(!isLocal());
