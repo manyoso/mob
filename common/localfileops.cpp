@@ -2,7 +2,7 @@
 
 #define DEBUG_LOCALFILEOPSOPS 0
 
-bool LocalFileOps::getattr(const QString& path, QFileInfo* info) const
+bool LocalFileOps::getattr(const QString& path, FileInfo* info) const
 {
     Q_UNUSED(path);
     Q_UNUSED(info);
@@ -189,7 +189,7 @@ bool LocalFileOps::opendir(const QString& path) const
     return true;
 }
 
-bool LocalFileOps::readdir(const QString& path, QDir* info) const
+bool LocalFileOps::readdir(const QString& path, FileInfo* info) const
 {
     Q_UNUSED(path);
     Q_UNUSED(info);

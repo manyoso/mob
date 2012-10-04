@@ -2,7 +2,7 @@
 
 #define DEBUG_REMOTEFILEOPS 0
 
-bool RemoteFileOps::getattr(const QString& path, QFileInfo* info) const
+bool RemoteFileOps::getattr(const QString& path, FileInfo* info) const
 {
     Q_UNUSED(path);
     Q_UNUSED(info);
@@ -189,7 +189,7 @@ bool RemoteFileOps::opendir(const QString& path) const
     return true;
 }
 
-bool RemoteFileOps::readdir(const QString& path, QDir* info) const
+bool RemoteFileOps::readdir(const QString& path, FileInfo* info) const
 {
     Q_UNUSED(path);
     Q_UNUSED(info);

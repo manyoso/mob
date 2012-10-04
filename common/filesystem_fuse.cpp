@@ -14,13 +14,41 @@
 
 #define DEBUG_FILESYSTEM 0
 
+static RemoteFileOps* fileOps()
+{
+    fuse_context* context = fuse_get_context();
+    Q_ASSERT(context);
+    if (!context)
+        return 0;
+
+    return static_cast<RemoteFileOps*>(context->private_data);
+}
+
 static int fs_getattr(const char* path, struct stat* stbuf)
 {
-    Q_UNUSED(path);
-    Q_UNUSED(stbuf);
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_getattr";
 #endif
+
+    const RemoteFileOps* ops = fileOps();
+    if (!ops)
+        return EAGAIN;
+
+    FileInfo info;
+    if (!ops->getattr(path, &info))
+        return ops->error();
+
+    stbuf->st_ino       = info.serialNumber;
+    stbuf->st_mode      = info.mode;
+    stbuf->st_nlink     = info.numberOfHardLinks;
+    stbuf->st_uid       = info.userId;
+    stbuf->st_gid       = info.groupId;
+    stbuf->st_rdev      = info.deviceId;
+    stbuf->st_size      = info.size;
+    stbuf->st_atime     = info.lastAccess.toTime_t();
+    stbuf->st_mtime     = info.lastDataModification.toTime_t();
+    stbuf->st_ctime     = info.lastStatusChange.toTime_t();
+    stbuf->st_blocks    = info.numberOfBlocks;
     return 0;
 }
 

@@ -9,13 +9,38 @@ class Node;
  * A file operations interface.
  */
 
+struct FileInfo {
+    FileInfo()
+        : serialNumber(-1)
+        , mode(-1)
+        , numberOfHardLinks(0)
+        , userId(-1)
+        , groupId(-1)
+        , deviceId(-1)
+        , size(0)
+        , numberOfBlocks(0)
+    {}
+
+    quint64     serialNumber;
+    quint16     mode;
+    quint16     numberOfHardLinks;
+    quint32     userId;
+    quint32     groupId;
+    qint32      deviceId;
+    qint64      size;
+    QDateTime   lastAccess;
+    QDateTime   lastDataModification;
+    QDateTime   lastStatusChange;
+    qint64      numberOfBlocks;
+};
+
 class FileOps {
 public:
     FileOps(Node* node) : m_node(node) {}
 
     Node* node() const { return m_node; }
 
-    virtual bool getattr(const QString& path, QFileInfo*) const = 0;
+    virtual bool getattr(const QString& path, FileInfo*) const = 0;
     virtual bool readlink(const QString& path, QTextStream& buffer) const = 0;
     virtual bool create(const QString& path, QFile::Permissions) const = 0;
     virtual bool mkdir(const QString& path, QFile::Permissions) const = 0;
@@ -34,13 +59,16 @@ public:
     virtual bool release(const QString& path) const = 0;
     virtual bool fsync(const QString& path) const = 0;
     virtual bool opendir(const QString& path) const = 0;
-    virtual bool readdir(const QString& path, QDir*) const = 0;
+    virtual bool readdir(const QString& path, FileInfo*) const = 0;
     virtual bool releasedir(const QString& path) const = 0;
     virtual bool fsyncdir(const QString& path) const = 0;
     virtual bool utime(const QString& path, const QDateTime& acc, const QDateTime& mod) const = 0;
 
+    quint8 error() const { return m_error; }
+
 private:
     Node* m_node;
+    quint8 m_error;
 };
 
 #endif // fileops_h

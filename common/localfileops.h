@@ -7,7 +7,7 @@ class LocalFileOps : public FileOps {
 public:
     LocalFileOps(Node* node) : FileOps(node) {}
 
-    bool getattr(const QString& path, QFileInfo*) const;
+    bool getattr(const QString& path, FileInfo*) const;
     bool readlink(const QString& path, QTextStream& buffer) const;
     bool create(const QString& path, QFile::Permissions) const;
     bool mkdir(const QString& path, QFile::Permissions) const;
@@ -26,7 +26,7 @@ public:
     bool release(const QString& path) const;
     bool fsync(const QString& path) const;
     bool opendir(const QString& path) const;
-    bool readdir(const QString& path, QDir*) const;
+    bool readdir(const QString& path, FileInfo*) const;
     bool releasedir(const QString& path) const;
     bool fsyncdir(const QString& path) const;
     bool utime(const QString& path, const QDateTime& acc, const QDateTime& mod) const;
