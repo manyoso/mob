@@ -44,7 +44,7 @@ static int fs_getattr(const char* path, struct stat* stbuf)
     if (!ops->getattr(path, &info))
         return ops->error();
 
- #if DEBUG_FILESYSTEM
+#if DEBUG_FILESYSTEM
     qDebug() << "fs_getattr for" << path;
 #endif
 
@@ -328,13 +328,9 @@ FileSystem::~FileSystem()
     delete d;
 }
 
-QString FileSystem::mountPoint() const
+const QString& FileSystem::mountPoint()
 {
-    static QString mount;
-    if (mount.isEmpty()) {
-        mount = QDir::tempPath();
-        mount.append(QCoreApplication::applicationName());
-    }
+    static QString mount = QDir::tempPath().append(QCoreApplication::applicationName());
     return mount;
 }
 

@@ -11,7 +11,7 @@ public:
     FileSystem(RemoteFileOps* fileOps);
     ~FileSystem();
 
-    QString mountPoint() const;
+    static const QString& mountPoint();
 
 protected:
     virtual void run();

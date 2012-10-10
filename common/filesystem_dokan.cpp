@@ -28,10 +28,9 @@ FileSystem::~FileSystem()
     delete d;
 }
 
-QString FileSystem::mountPoint() const
+const QString& FileSystem::mountPoint()
 {
-    QString mount = QDir::tempPath();
-    mount.append(QCoreApplication::applicationName());
+    static QString mount = QDir::tempPath().append(QCoreApplication::applicationName());
     return mount;
 }
 
