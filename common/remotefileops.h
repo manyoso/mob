@@ -7,29 +7,29 @@ class RemoteFileOps : public FileOps {
 public:
     RemoteFileOps(const QHostAddress& address) : FileOps(address) {}
 
-    bool getattr(const QString& path, FileInfo*) const;
-    bool readlink(const QString& path, QTextStream& buffer) const;
-    bool create(const QString& path, QFile::Permissions) const;
-    bool mkdir(const QString& path, QFile::Permissions) const;
-    bool unlink(const QString& path) const;
-    bool rmdir(const QString& path) const;
-    bool symlink(const QString& path1, const QString& path2) const;
-    bool rename(const QString& path1, const QString& path2) const;
-    bool link(const QString& path1, const QString& path2) const;
-    bool chmod(const QString& path, QFile::Permissions) const;
-    bool chown(const QString& path, quint32 uid, quint32 gid) const;
-    bool truncate(const QString& path, qint64 size) const;
-    bool open(const QString& path) const;
-    bool read(const QString& path, QByteArray *buffer, size_t size, qint64 offset) const;
-    bool write(const QString& path, const QByteArray &data, qint64 offset) const;
-    bool flush(const QString& path) const;
-    bool release(const QString& path) const;
-    bool fsync(const QString& path) const;
-    bool opendir(const QString& path) const;
-    bool readdir(const QString& path, FileInfo*) const;
-    bool releasedir(const QString& path) const;
-    bool fsyncdir(const QString& path) const;
-    bool utime(const QString& path, const QDateTime& acc, const QDateTime& mod) const;
+    bool getattr(const QLatin1String& path, FileInfo*);
+    bool readlink(const QLatin1String& path, QTextStream& buffer);
+    bool create(const QLatin1String& path, QFile::Permissions);
+    bool mkdir(const QLatin1String& path, QFile::Permissions);
+    bool unlink(const QLatin1String& path);
+    bool rmdir(const QLatin1String& path);
+    bool symlink(const QLatin1String& path1, const QLatin1String& path2);
+    bool rename(const QLatin1String& path1, const QLatin1String& path2);
+    bool link(const QLatin1String& path1, const QLatin1String& path2);
+    bool chmod(const QLatin1String& path, QFile::Permissions);
+    bool chown(const QLatin1String& path, quint32 uid, quint32 gid);
+    bool truncate(const QLatin1String& path, qint64 size);
+    bool open(const QLatin1String& path, qint32 flags, quint64* fh);
+    bool read(const QLatin1String& path, QByteArray *buffer, qint64 size, qint64 offset, quint64 fh);
+    bool write(const QLatin1String& path, const QByteArray &data, qint64 offset);
+    bool flush(const QLatin1String& path);
+    bool release(const QLatin1String& path, qint32 flags, quint64 fh);
+    bool fsync(const QLatin1String& path);
+    bool opendir(const QLatin1String& path, quint64* fh);
+    bool readdir(const QLatin1String& path, FileInfo*, quint64 fh);
+    bool releasedir(const QLatin1String& path, quint64 fh);
+    bool fsyncdir(const QLatin1String& path);
+    bool utime(const QLatin1String& path, const QDateTime& acc, const QDateTime& mod);
 };
 
 #endif // remotefileops_h

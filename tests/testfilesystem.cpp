@@ -7,7 +7,6 @@
 void TestFileSystem::test()
 {
     LocalFileOps localFileOps(QHostAddress::LocalHost);
-    RemoteFileOps remoteFileOps(QHostAddress::LocalHost);
-    FileSystem remoteFileSystem(&remoteFileOps);
-    remoteFileSystem.start();
+    FileSystem fileSystem(&localFileOps);
+    fileSystem.start();
 }

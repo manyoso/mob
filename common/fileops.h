@@ -94,33 +94,33 @@ public:
 
     QHostAddress address() const { return m_address; }
 
-    virtual bool getattr(const QString& path, FileInfo*) const = 0;
-    virtual bool readlink(const QString& path, QTextStream& buffer) const = 0;
-    virtual bool create(const QString& path, QFile::Permissions) const = 0;
-    virtual bool mkdir(const QString& path, QFile::Permissions) const = 0;
-    virtual bool unlink(const QString& path) const = 0;
-    virtual bool rmdir(const QString& path) const = 0;
-    virtual bool symlink(const QString& path1, const QString& path2) const = 0;
-    virtual bool rename(const QString& path1, const QString& path2) const = 0;
-    virtual bool link(const QString& path1, const QString& path2) const = 0;
-    virtual bool chmod(const QString& path, QFile::Permissions) const = 0;
-    virtual bool chown(const QString& path, quint32 uid, quint32 gid) const = 0;
-    virtual bool truncate(const QString& path, qint64 size) const = 0;
-    virtual bool open(const QString& path) const = 0;
-    virtual bool read(const QString& path, QByteArray *buffer, size_t size, qint64 offset) const = 0;
-    virtual bool write(const QString& path, const QByteArray &data, qint64 offset) const = 0;
-    virtual bool flush(const QString& path) const = 0;
-    virtual bool release(const QString& path) const = 0;
-    virtual bool fsync(const QString& path) const = 0;
-    virtual bool opendir(const QString& path) const = 0;
-    virtual bool readdir(const QString& path, FileInfo*) const = 0;
-    virtual bool releasedir(const QString& path) const = 0;
-    virtual bool fsyncdir(const QString& path) const = 0;
-    virtual bool utime(const QString& path, const QDateTime& acc, const QDateTime& mod) const = 0;
+    virtual bool getattr(const QLatin1String& path, FileInfo*) = 0;
+    virtual bool readlink(const QLatin1String& path, QTextStream& buffer) = 0;
+    virtual bool create(const QLatin1String& path, QFile::Permissions) = 0;
+    virtual bool mkdir(const QLatin1String& path, QFile::Permissions) = 0;
+    virtual bool unlink(const QLatin1String& path) = 0;
+    virtual bool rmdir(const QLatin1String& path) = 0;
+    virtual bool symlink(const QLatin1String& path1, const QLatin1String& path2) = 0;
+    virtual bool rename(const QLatin1String& path1, const QLatin1String& path2) = 0;
+    virtual bool link(const QLatin1String& path1, const QLatin1String& path2) = 0;
+    virtual bool chmod(const QLatin1String& path, QFile::Permissions) = 0;
+    virtual bool chown(const QLatin1String& path, quint32 uid, quint32 gid) = 0;
+    virtual bool truncate(const QLatin1String& path, qint64 size) = 0;
+    virtual bool open(const QLatin1String& path, qint32 flags, quint64* fh = 0) = 0;
+    virtual bool read(const QLatin1String& path, QByteArray *buffer, qint64 size, qint64 offset, quint64 fh = 0) = 0;
+    virtual bool write(const QLatin1String& path, const QByteArray &data, qint64 offset) = 0;
+    virtual bool flush(const QLatin1String& path) = 0;
+    virtual bool release(const QLatin1String& path, qint32 flags, quint64 fh = 0) = 0;
+    virtual bool fsync(const QLatin1String& path) = 0;
+    virtual bool opendir(const QLatin1String& path, quint64* fh = 0) = 0;
+    virtual bool readdir(const QLatin1String& path, FileInfo*, quint64 fh = 0) = 0;
+    virtual bool releasedir(const QLatin1String& path, quint64 fh = 0) = 0;
+    virtual bool fsyncdir(const QLatin1String& path) = 0;
+    virtual bool utime(const QLatin1String& path, const QDateTime& acc, const QDateTime& mod) = 0;
 
-    quint8 error() const { return m_error; }
+    qint32 error() const { return -m_error; }
 
-private:
+protected:
     QHostAddress m_address;
     quint8 m_error;
 };

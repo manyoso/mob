@@ -2,7 +2,7 @@
 
 #define DEBUG_REMOTEFILEOPS 0
 
-bool RemoteFileOps::getattr(const QString& path, FileInfo* info) const
+bool RemoteFileOps::getattr(const QLatin1String& path, FileInfo* info)
 {
     Q_UNUSED(path);
     Q_UNUSED(info);
@@ -12,7 +12,7 @@ bool RemoteFileOps::getattr(const QString& path, FileInfo* info) const
     return true;
 }
 
-bool RemoteFileOps::readlink(const QString& path, QTextStream& buffer) const
+bool RemoteFileOps::readlink(const QLatin1String& path, QTextStream& buffer)
 {
     Q_UNUSED(path);
     Q_UNUSED(buffer);
@@ -22,7 +22,7 @@ bool RemoteFileOps::readlink(const QString& path, QTextStream& buffer) const
     return true;
 }
 
-bool RemoteFileOps::create(const QString& path, QFile::Permissions perm) const
+bool RemoteFileOps::create(const QLatin1String& path, QFile::Permissions perm)
 {
     Q_UNUSED(path);
     Q_UNUSED(perm);
@@ -32,7 +32,7 @@ bool RemoteFileOps::create(const QString& path, QFile::Permissions perm) const
     return true;
 }
 
-bool RemoteFileOps::mkdir(const QString& path, QFile::Permissions perm) const
+bool RemoteFileOps::mkdir(const QLatin1String& path, QFile::Permissions perm)
 {
     Q_UNUSED(path);
     Q_UNUSED(perm);
@@ -42,7 +42,7 @@ bool RemoteFileOps::mkdir(const QString& path, QFile::Permissions perm) const
     return true;
 }
 
-bool RemoteFileOps::unlink(const QString& path) const
+bool RemoteFileOps::unlink(const QLatin1String& path)
 {
     Q_UNUSED(path);
 #if DEBUG_REMOTEFILEOPS
@@ -51,7 +51,7 @@ bool RemoteFileOps::unlink(const QString& path) const
     return true;
 }
 
-bool RemoteFileOps::rmdir(const QString& path) const
+bool RemoteFileOps::rmdir(const QLatin1String& path)
 {
     Q_UNUSED(path);
 #if DEBUG_REMOTEFILEOPS
@@ -60,7 +60,7 @@ bool RemoteFileOps::rmdir(const QString& path) const
     return true;
 }
 
-bool RemoteFileOps::symlink(const QString& path1, const QString& path2) const
+bool RemoteFileOps::symlink(const QLatin1String& path1, const QLatin1String& path2)
 {
     Q_UNUSED(path1);
     Q_UNUSED(path2);
@@ -70,7 +70,7 @@ bool RemoteFileOps::symlink(const QString& path1, const QString& path2) const
     return true;
 }
 
-bool RemoteFileOps::rename(const QString& path1, const QString& path2) const
+bool RemoteFileOps::rename(const QLatin1String& path1, const QLatin1String& path2)
 {
     Q_UNUSED(path1);
     Q_UNUSED(path2);
@@ -80,7 +80,7 @@ bool RemoteFileOps::rename(const QString& path1, const QString& path2) const
     return true;
 }
 
-bool RemoteFileOps::link(const QString& path1, const QString& path2) const
+bool RemoteFileOps::link(const QLatin1String& path1, const QLatin1String& path2)
 {
     Q_UNUSED(path1);
     Q_UNUSED(path2);
@@ -90,7 +90,7 @@ bool RemoteFileOps::link(const QString& path1, const QString& path2) const
     return true;
 }
 
-bool RemoteFileOps::chmod(const QString& path, QFile::Permissions perm) const
+bool RemoteFileOps::chmod(const QLatin1String& path, QFile::Permissions perm)
 {
     Q_UNUSED(path);
     Q_UNUSED(perm);
@@ -100,7 +100,7 @@ bool RemoteFileOps::chmod(const QString& path, QFile::Permissions perm) const
     return true;
 }
 
-bool RemoteFileOps::chown(const QString& path, quint32 uid, quint32 gid) const
+bool RemoteFileOps::chown(const QLatin1String& path, quint32 uid, quint32 gid)
 {
     Q_UNUSED(path);
     Q_UNUSED(uid);
@@ -111,7 +111,7 @@ bool RemoteFileOps::chown(const QString& path, quint32 uid, quint32 gid) const
     return true;
 }
 
-bool RemoteFileOps::truncate(const QString& path, qint64 size) const
+bool RemoteFileOps::truncate(const QLatin1String& path, qint64 size)
 {
     Q_UNUSED(path);
     Q_UNUSED(size);
@@ -121,28 +121,31 @@ bool RemoteFileOps::truncate(const QString& path, qint64 size) const
     return true;
 }
 
-bool RemoteFileOps::open(const QString& path) const
+bool RemoteFileOps::open(const QLatin1String& path, qint32 flags, quint64* fh)
 {
     Q_UNUSED(path);
+    Q_UNUSED(flags);
+    Q_UNUSED(fh);
 #if DEBUG_REMOTEFILEOPS
     qDebug() << "Remote file open" << path;
 #endif
     return true;
 }
 
-bool RemoteFileOps::read(const QString& path, QByteArray *buffer, size_t size, qint64 offset) const
+bool RemoteFileOps::read(const QLatin1String& path, QByteArray *buffer, qint64 size, qint64 offset, quint64 fh)
 {
     Q_UNUSED(path);
     Q_UNUSED(buffer);
     Q_UNUSED(size);
     Q_UNUSED(offset);
+    Q_UNUSED(fh);
 #if DEBUG_REMOTEFILEOPS
     qDebug() << "Remote file read" << path << size << offset;
 #endif
     return true;
 }
 
-bool RemoteFileOps::write(const QString& path, const QByteArray &data, qint64 offset) const
+bool RemoteFileOps::write(const QLatin1String& path, const QByteArray &data, qint64 offset)
 {
     Q_UNUSED(path);
     Q_UNUSED(data);
@@ -153,7 +156,7 @@ bool RemoteFileOps::write(const QString& path, const QByteArray &data, qint64 of
     return true;
 }
 
-bool RemoteFileOps::flush(const QString& path) const
+bool RemoteFileOps::flush(const QLatin1String& path)
 {
     Q_UNUSED(path);
 #if DEBUG_REMOTEFILEOPS
@@ -162,16 +165,18 @@ bool RemoteFileOps::flush(const QString& path) const
     return true;
 }
 
-bool RemoteFileOps::release(const QString& path) const
+bool RemoteFileOps::release(const QLatin1String& path, qint32 flags, quint64 fh)
 {
     Q_UNUSED(path);
+    Q_UNUSED(flags);
+    Q_UNUSED(fh);
 #if DEBUG_REMOTEFILEOPS
     qDebug() << "Remote file release" << path;
 #endif
     return true;
 }
 
-bool RemoteFileOps::fsync(const QString& path) const
+bool RemoteFileOps::fsync(const QLatin1String& path)
 {
     Q_UNUSED(path);
 #if DEBUG_REMOTEFILEOPS
@@ -180,35 +185,38 @@ bool RemoteFileOps::fsync(const QString& path) const
     return true;
 }
 
-bool RemoteFileOps::opendir(const QString& path) const
+bool RemoteFileOps::opendir(const QLatin1String& path, quint64* fh)
 {
     Q_UNUSED(path);
+    Q_UNUSED(fh);
 #if DEBUG_REMOTEFILEOPS
     qDebug() << "Remote file opendir" << path;
 #endif
     return true;
 }
 
-bool RemoteFileOps::readdir(const QString& path, FileInfo* info) const
+bool RemoteFileOps::readdir(const QLatin1String& path, FileInfo* info, quint64 fh)
 {
     Q_UNUSED(path);
     Q_UNUSED(info);
+    Q_UNUSED(fh);
 #if DEBUG_REMOTEFILEOPS
     qDebug() << "Remote file readdir" << path;
 #endif
     return true;
 }
 
-bool RemoteFileOps::releasedir(const QString& path) const
+bool RemoteFileOps::releasedir(const QLatin1String& path, quint64 fh)
 {
     Q_UNUSED(path);
+    Q_UNUSED(fh);
 #if DEBUG_REMOTEFILEOPS
     qDebug() << "Remote file releasedir" << path;
 #endif
     return true;
 }
 
-bool RemoteFileOps::fsyncdir(const QString& path) const
+bool RemoteFileOps::fsyncdir(const QLatin1String& path)
 {
     Q_UNUSED(path);
 #if DEBUG_REMOTEFILEOPS
@@ -217,7 +225,7 @@ bool RemoteFileOps::fsyncdir(const QString& path) const
     return true;
 }
 
-bool RemoteFileOps::utime(const QString& path, const QDateTime& acc, const QDateTime& mod) const
+bool RemoteFileOps::utime(const QLatin1String& path, const QDateTime& acc, const QDateTime& mod)
 {
     Q_UNUSED(path);
     Q_UNUSED(acc);

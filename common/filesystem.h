@@ -4,11 +4,11 @@
 #include <QtCore/QThread>
 
 class FileSystemPrivate;
-class RemoteFileOps;
+class FileOps;
 class FileSystem : public QThread {
     Q_OBJECT
 public:
-    FileSystem(RemoteFileOps* fileOps);
+    FileSystem(FileOps* fileOps);
     ~FileSystem();
 
     static const QString& mountPoint();

@@ -14,17 +14,26 @@
 
 #define DEBUG_FILESYSTEM 0
 
+QDebug operator<<(QDebug dbg, struct fuse_file_info* fi)
+{
+    if (!fi)
+        dbg.nospace() << "(!fuse_file_info)";
+    else
+        dbg.nospace() << "(flags=" << fi->flags << ", fh=" << fi->fh << ")";
+    return dbg.space();
+}
+
 struct FileSystemPrivate
 {
-    FileSystemPrivate(RemoteFileOps* ops)
+    FileSystemPrivate(FileOps* ops)
     {
         m_fileOps = ops;
     }
 
-    RemoteFileOps* m_fileOps;
+    FileOps* m_fileOps;
 };
 
-static RemoteFileOps* fileOps()
+static FileOps* fileOps()
 {
     fuse_context* context = fuse_get_context();
     Q_ASSERT(context);
@@ -36,17 +45,17 @@ static RemoteFileOps* fileOps()
 
 static int fs_getattr(const char* path, struct stat* stbuf)
 {
-    const RemoteFileOps* ops = fileOps();
-    if (!ops)
-        return EAGAIN;
-
-    FileInfo info;
-    if (!ops->getattr(path, &info))
-        return ops->error();
-
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_getattr for" << path;
 #endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
+    FileInfo info;
+    if (!ops->getattr(QLatin1String(path), &info))
+        return ops->error();
 
     stbuf->st_ino       = info.serialNumber();
     stbuf->st_mode      = info.mode();
@@ -64,226 +73,349 @@ static int fs_getattr(const char* path, struct stat* stbuf)
 
 static int fs_readlink(const char* path, char*, size_t)
 {
-    Q_UNUSED(path);
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_readlink";
+    qDebug() << "fs_readlink" << path;
 #endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
+    Q_UNUSED(path);
     return 0;
 }
 
 static int fs_create(const char* path, mode_t mode, struct fuse_file_info* fi)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_create" << path << mode << fi;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(mode);
     Q_UNUSED(fi);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_create";
-#endif
     return 0;
 }
 
 static int fs_mkdir(const char* path, mode_t mode)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_mkdir" << path << mode;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(mode);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_mkdir";
-#endif
     return 0;
 }
 
 static int fs_unlink(const char* path)
 {
-    Q_UNUSED(path);
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_unlink";
+    qDebug() << "fs_unlink" << path;
 #endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
+    Q_UNUSED(path);
     return 0;
 }
 
 static int fs_rmdir(const char* path)
 {
-    Q_UNUSED(path);
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_rmdir";
+    qDebug() << "fs_rmdir" << path;
 #endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
+    Q_UNUSED(path);
     return 0;
 }
 
 static int fs_symlink(const char* path1, const char* path2)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_symlink" << path1 << path2;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path1);
     Q_UNUSED(path2);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_symlink";
-#endif
     return 0;
 }
 
 static int fs_rename(const char* path1, const char* path2)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_rename" << path1 << path2;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path1);
     Q_UNUSED(path2);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_rename";
-#endif
     return 0;
 }
 
 static int fs_link(const char* path1, const char* path2)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_link" << path1 << path2;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path1);
     Q_UNUSED(path2);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_link";
-#endif
     return 0;
 }
 
 static int fs_chmod(const char* path, mode_t mode)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_chmod" << path << mode;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(mode);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_chmod";
-#endif
     return 0;
 }
 
 static int fs_chown(const char* path, uid_t uid, gid_t gid)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_chown" << path << uid << gid;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(uid);
     Q_UNUSED(gid);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_chown";
-#endif
     return 0;
 }
 
-static int fs_truncate(const char* path, off_t)
+static int fs_truncate(const char* path, off_t offset)
 {
-    Q_UNUSED(path);
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_truncate";
+    qDebug() << "fs_truncate" << path << offset;
 #endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
+    Q_UNUSED(path);
+    Q_UNUSED(offset);
     return 0;
 }
 
 static int fs_open(const char* path, struct fuse_file_info* fi)
 {
-    Q_UNUSED(path);
-    Q_UNUSED(fi);
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_open";
+    qDebug() << "fs_open" << path << fi;
 #endif
+
+    Q_ASSERT(fi);
+    if (!fi)
+        return -EAGAIN;
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
+    if (!ops->open(QLatin1String(path), fi->flags, &fi->fh))
+        return ops->error();
     return 0;
 }
 
 static int fs_read(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
-    Q_UNUSED(path);
-    Q_UNUSED(buf);
-    Q_UNUSED(size);
-    Q_UNUSED(offset);
-    Q_UNUSED(fi);
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_read";
+    qDebug() << "fs_read" << path << size << offset << fi;
 #endif
+
+    Q_UNUSED(fi);
+    if (!fi)
+        return -EAGAIN;
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
+    QByteArray bytes = QByteArray::fromRawData(buf, size);
+    if (!ops->read(QLatin1String(path), &bytes, size, offset, fi->fh))
+        return ops->error();
     return 0;
 }
 
-static int fs_write(const char* path, const char* data, size_t, off_t, struct fuse_file_info* fi)
+static int fs_write(const char* path, const char* data, size_t size, off_t offset, struct fuse_file_info* fi)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_write" << path << data << size << offset << fi;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(data);
+    Q_UNUSED(size);
+    Q_UNUSED(offset);
     Q_UNUSED(fi);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_write";
-#endif
     return 0;
 }
 
 static int fs_flush(const char* path, struct fuse_file_info* fi)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_flush" << path << fi;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(fi);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_flush";
-#endif
     return 0;
 }
 
 static int fs_release(const char* path, struct fuse_file_info* fi)
 {
-    Q_UNUSED(path);
-    Q_UNUSED(fi);
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_release";
+    qDebug() << "fs_release" << path << fi;
 #endif
+
+    Q_ASSERT(fi);
+    if (!fi)
+        return -EAGAIN;
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
+    if (!ops->release(QLatin1String(path), fi->flags, fi->fh))
+        return ops->error();
     return 0;
 }
 
 static int fs_fsync(const char* path, int, struct fuse_file_info* fi)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_fsync" << path << fi;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(fi);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_fsync";
-#endif
     return 0;
 }
 
 static int fs_opendir(const char* path, struct fuse_file_info* fi)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_opendir" << path << fi;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(fi);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_opendir";
-#endif
     return 0;
 }
 
 static int fs_readdir(const char* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_readdir" << path << filler << offset << fi;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(buf);
     Q_UNUSED(filler);
     Q_UNUSED(offset);
     Q_UNUSED(fi);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_readdir";
-#endif
     return 0;
 }
 
 static int fs_releasedir(const char* path, struct fuse_file_info* fi)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_releasedir" << path << fi;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(fi);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_releasedir";
-#endif
     return 0;
 }
 
 static int fs_fsyncdir(const char* path, int, struct fuse_file_info* fi)
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_fsyncdir" << path << fi;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(fi);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_fsyncdir";
-#endif
     return 0;
 }
 
 static int fs_utimens(const char* path, const struct timespec tv[2])
 {
+#if DEBUG_FILESYSTEM
+    qDebug() << "fs_utimenss" << path << tv;
+#endif
+
+    FileOps* ops = fileOps();
+    if (!ops)
+        return -EAGAIN;
+
     Q_UNUSED(path);
     Q_UNUSED(tv);
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_utimenss";
-#endif
     return 0;
 }
 
@@ -308,7 +440,7 @@ static void fs_destroy(void* p)
     s_fuse = 0;
 }
 
-FileSystem::FileSystem(RemoteFileOps* ops)
+FileSystem::FileSystem(FileOps* ops)
     : QThread(0)
     , d(new FileSystemPrivate(ops))
 {
@@ -347,8 +479,11 @@ void FileSystem::stop()
 
     Q_ASSERT(s_fuse);
     fuse_exit(s_fuse);
-    struct stat statbuf;
-    stat(mountPoint().toAscii().constData(), &statbuf);
+    errno = 0;
+    struct stat stbuf;
+    QString foo = mountPoint();
+    foo.append("/foo");
+    stat(foo.toAscii().constData(), &stbuf);
     if (!wait(5000)) {
         terminate();
         wait();
