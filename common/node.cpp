@@ -12,9 +12,9 @@ Node::Node(bool isLocal, const QHostAddress& address)
     , m_fileSystem(0)
 {
     if (isLocal)
-        m_fileOps = new LocalFileOps(this);
+        m_fileOps = new LocalFileOps(address);
     else {
-        m_fileOps = new RemoteFileOps(this);
+        m_fileOps = new RemoteFileOps(address);
         m_fileSystem = new FileSystem(static_cast<RemoteFileOps*>(m_fileOps));
     }
 }

@@ -5,7 +5,7 @@
 
 class RemoteFileOps : public FileOps {
 public:
-    RemoteFileOps(Node* node) : FileOps(node) {}
+    RemoteFileOps(const QHostAddress& address) : FileOps(address) {}
 
     bool getattr(const QString& path, FileInfo*) const;
     bool readlink(const QString& path, QTextStream& buffer) const;

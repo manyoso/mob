@@ -5,7 +5,7 @@
 
 class LocalFileOps : public FileOps {
 public:
-    LocalFileOps(Node* node) : FileOps(node) {}
+    LocalFileOps(const QHostAddress& address) : FileOps(address) {}
 
     bool getattr(const QString& path, FileInfo*) const;
     bool readlink(const QString& path, QTextStream& buffer) const;

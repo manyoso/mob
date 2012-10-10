@@ -28,10 +28,11 @@ class Message : public QObject {
     Q_PROPERTY(const QByteArray& sessionId READ sessionId WRITE setSessionId)
 public:
     enum Type {
-        NodeInfo = 0
+        NodeInfo = 0,
+        FileInfo
     };
 
-    const static quint16 NumberOfTypes = NodeInfo + 1;
+    const static quint16 NumberOfTypes = FileInfo + 1;
     static Message* createMessage(Message::Type);
     static Message* cloneMessage(const Message*);
     static MessageFactory installMessageFactory(Message::Type, MessageFactory);

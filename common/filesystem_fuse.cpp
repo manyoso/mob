@@ -14,6 +14,16 @@
 
 #define DEBUG_FILESYSTEM 0
 
+struct FileSystemPrivate
+{
+    FileSystemPrivate(RemoteFileOps* ops)
+    {
+        m_fileOps = ops;
+    }
+
+    RemoteFileOps* m_fileOps;
+};
+
 static RemoteFileOps* fileOps()
 {
     fuse_context* context = fuse_get_context();
@@ -21,15 +31,11 @@ static RemoteFileOps* fileOps()
     if (!context)
         return 0;
 
-    return static_cast<RemoteFileOps*>(context->private_data);
+    return static_cast<FileSystemPrivate*>(context->private_data)->m_fileOps;
 }
 
 static int fs_getattr(const char* path, struct stat* stbuf)
 {
-#if DEBUG_FILESYSTEM
-    qDebug() << "fs_getattr";
-#endif
-
     const RemoteFileOps* ops = fileOps();
     if (!ops)
         return EAGAIN;
@@ -38,17 +44,21 @@ static int fs_getattr(const char* path, struct stat* stbuf)
     if (!ops->getattr(path, &info))
         return ops->error();
 
-    stbuf->st_ino       = info.serialNumber;
-    stbuf->st_mode      = info.mode;
-    stbuf->st_nlink     = info.numberOfHardLinks;
-    stbuf->st_uid       = info.userId;
-    stbuf->st_gid       = info.groupId;
-    stbuf->st_rdev      = info.deviceId;
-    stbuf->st_size      = info.size;
-    stbuf->st_atime     = info.lastAccess.toTime_t();
-    stbuf->st_mtime     = info.lastDataModification.toTime_t();
-    stbuf->st_ctime     = info.lastStatusChange.toTime_t();
-    stbuf->st_blocks    = info.numberOfBlocks;
+ #if DEBUG_FILESYSTEM
+    qDebug() << "fs_getattr for" << path;
+#endif
+
+    stbuf->st_ino       = info.serialNumber();
+    stbuf->st_mode      = info.mode();
+    stbuf->st_nlink     = info.numberOfHardLinks();
+    stbuf->st_uid       = info.userId();
+    stbuf->st_gid       = info.groupId();
+    stbuf->st_rdev      = info.deviceId();
+    stbuf->st_size      = info.size();
+    stbuf->st_atime     = info.lastAccess().toTime_t();
+    stbuf->st_mtime     = info.lastDataModification().toTime_t();
+    stbuf->st_ctime     = info.lastStatusChange().toTime_t();
+    stbuf->st_blocks    = info.numberOfBlocks();
     return 0;
 }
 
@@ -298,16 +308,6 @@ static void fs_destroy(void* p)
     s_fuse = 0;
 }
 
-struct FileSystemPrivate
-{
-    FileSystemPrivate(RemoteFileOps* ops)
-    {
-        m_fileOps = ops;
-    }
-
-    RemoteFileOps* m_fileOps;
-};
-
 FileSystem::FileSystem(RemoteFileOps* ops)
     : QThread(0)
     , d(new FileSystemPrivate(ops))
@@ -353,7 +353,7 @@ void FileSystem::stop()
     fuse_exit(s_fuse);
     struct stat statbuf;
     stat(mountPoint().toAscii().constData(), &statbuf);
-    if (!wait(1000)) {
+    if (!wait(5000)) {
         terminate();
         wait();
     }
