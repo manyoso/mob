@@ -17,6 +17,7 @@ protected:
     virtual void run();
 
 private:
+    void stop();
     FileSystemPrivate* d;
 };
 

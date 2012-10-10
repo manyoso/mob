@@ -35,6 +35,11 @@ QString FileSystem::mountPoint() const
     return mount;
 }
 
+void FileSystem::stop()
+{
+    QThread::exit(0);
+}
+
 void FileSystem::run()
 {
     exec();

@@ -277,6 +277,7 @@ static int fs_utimens(const char* path, const struct timespec tv[2])
     return 0;
 }
 
+static struct fuse* s_fuse = 0;
 static void* fs_init(struct fuse_conn_info* conn)
 {
     Q_UNUSED(conn);
@@ -284,6 +285,7 @@ static void* fs_init(struct fuse_conn_info* conn)
     qDebug() << "fs_init";
 #endif
     fuse_context* context = fuse_get_context();
+    s_fuse = context->fuse;
     return context->private_data;
 }
 
@@ -293,6 +295,7 @@ static void fs_destroy(void* p)
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_destroy";
 #endif
+    s_fuse = 0;
 }
 
 struct FileSystemPrivate
@@ -315,19 +318,45 @@ FileSystem::FileSystem(RemoteFileOps* ops)
     sigaddset(&x, SIGHUP);
     sigaddset(&x, SIGINT);
     sigaddset(&x, SIGTERM);
+    sigaddset(&x, SIGPIPE);
     pthread_sigmask(SIG_BLOCK, &x, NULL);
 }
 
 FileSystem::~FileSystem()
 {
+    stop();
     delete d;
 }
 
 QString FileSystem::mountPoint() const
 {
-    QString mount = QDir::tempPath();
-    mount.append(QCoreApplication::applicationName());
+    static QString mount;
+    if (mount.isEmpty()) {
+        mount = QDir::tempPath();
+        mount.append(QCoreApplication::applicationName());
+    }
     return mount;
+}
+
+void FileSystem::stop()
+{
+    if (!s_fuse && wait(1000)) {
+        terminate();
+        return;
+    }
+
+#if DEBUG_FILESYSTEM
+    qDebug() << "Stopping fuse filesystem at" << mountPoint().toAscii().constData();
+#endif
+
+    Q_ASSERT(s_fuse);
+    fuse_exit(s_fuse);
+    struct stat statbuf;
+    stat(mountPoint().toAscii().constData(), &statbuf);
+    if (!wait(1000)) {
+        terminate();
+        wait();
+    }
 }
 
 void FileSystem::run()
@@ -338,9 +367,14 @@ void FileSystem::run()
     sigaddset(&x, SIGHUP);
     sigaddset(&x, SIGINT);
     sigaddset(&x, SIGTERM);
+    sigaddset(&x, SIGPIPE);
     pthread_sigmask(SIG_UNBLOCK, &x, NULL);
 
     QString mount = mountPoint();
+
+#if DEBUG_FILESYSTEM
+    qDebug() << "Starting fuse filesystem at" << mount;
+#endif
 
     // First delete the directory if it exists since we want to control the mode explicitly
     if (QFile::exists(mount) && rmdir(mount.toAscii().constData()) != 0) {
