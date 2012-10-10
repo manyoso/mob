@@ -1,5 +1,6 @@
 #include "localfileops.h"
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -146,7 +147,7 @@ bool LocalFileOps::truncate(const QLatin1String& path, qint64 size)
 bool LocalFileOps::open(const QLatin1String& path, qint32 flags, quint64* fh)
 {
 #if DEBUG_LOCALFILEOPS
-    qDebug() << "Local file open" << path << flags;
+    qDebug() << "Local file open" << path << flags << fh;
 #endif
 
     int rc = ::open(path.latin1(), flags);
@@ -160,7 +161,7 @@ bool LocalFileOps::open(const QLatin1String& path, qint32 flags, quint64* fh)
 bool LocalFileOps::read(const QLatin1String& path, QByteArray *buffer, qint64 size, qint64 offset, quint64 fh)
 {
 #if DEBUG_LOCALFILEOPS
-    qDebug() << "Local file read" << path << size << offset;
+    qDebug() << "Local file read" << path << size << offset << fh;
 #else
     Q_UNUSED(path);
 #endif
@@ -195,7 +196,7 @@ bool LocalFileOps::flush(const QLatin1String& path)
 bool LocalFileOps::release(const QLatin1String& path, qint32 flags, quint64 fh)
 {
 #if DEBUG_LOCALFILEOPS
-    qDebug() << "Local file release" << path << flags;
+    qDebug() << "Local file release" << path << flags << fh;
 #else
     Q_UNUSED(path);
     Q_UNUSED(flags);
@@ -219,32 +220,47 @@ bool LocalFileOps::fsync(const QLatin1String& path)
 bool LocalFileOps::opendir(const QLatin1String& path, quint64* fh)
 {
 #if DEBUG_LOCALFILEOPS
-    qDebug() << "Local file opendir" << path;
+    qDebug() << "Local file opendir" << path << fh;
 #endif
-    Q_UNUSED(path);
-    Q_UNUSED(fh);
-    return true;
+    DIR* dir = ::opendir(path.latin1());
+    if (!dir)
+        m_error = errno;
+    else if (fh)
+        *fh = reinterpret_cast<quint64>(dir);
+    return dir;
 }
 
-bool LocalFileOps::readdir(const QLatin1String& path, FileInfo* info, quint64 fh)
+bool LocalFileOps::readdir(const QLatin1String& path, quint64 offset, FileInfo* info, quint64 fh)
 {
 #if DEBUG_LOCALFILEOPS
     qDebug() << "Local file readdir" << path;
-#endif
+#else
     Q_UNUSED(path);
-    Q_UNUSED(info);
-    Q_UNUSED(fh);
-    return true;
+    Q_UNUSED(offset);
+#endif
+
+    struct dirent* dir = ::readdir(reinterpret_cast<DIR*>(fh));
+    if (!dir)
+        m_error = errno;
+    else if (info) {
+        info->setName(QString::fromAscii(dir->d_name, dir->d_namlen));
+        info->setSerialNumber(dir->d_ino);
+        info->setMode(dir->d_type << 12);
+    }
+    return dir;
 }
 
 bool LocalFileOps::releasedir(const QLatin1String& path, quint64 fh)
 {
 #if DEBUG_LOCALFILEOPS
-    qDebug() << "Local file releasedir" << path;
-#endif
+    qDebug() << "Local file releasedir" << path << fh;
+#else
     Q_UNUSED(path);
-    Q_UNUSED(fh);
-    return true;
+#endif
+    int rc = ::closedir(reinterpret_cast<DIR*>(fh));
+    if (rc != 0)
+        m_error = errno;
+    return rc == 0;
 }
 
 bool LocalFileOps::fsyncdir(const QLatin1String& path)

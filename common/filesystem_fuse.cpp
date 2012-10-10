@@ -347,12 +347,16 @@ static int fs_opendir(const char* path, struct fuse_file_info* fi)
     qDebug() << "fs_opendir" << path << fi;
 #endif
 
+    Q_ASSERT(fi);
+    if (!fi)
+        return -EAGAIN;
+
     FileOps* ops = fileOps();
     if (!ops)
         return -EAGAIN;
 
-    Q_UNUSED(path);
-    Q_UNUSED(fi);
+    if (!ops->opendir(QLatin1String(path), &fi->fh))
+        return ops->error();
     return 0;
 }
 
@@ -360,17 +364,29 @@ static int fs_readdir(const char* path, void* buf, fuse_fill_dir_t filler, off_t
 {
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_readdir" << path << filler << offset << fi;
+#else
+    Q_UNUSED(path);
+    Q_UNUSED(offset);
 #endif
+
+    Q_ASSERT(fi);
+    if (!fi)
+        return -EAGAIN;
 
     FileOps* ops = fileOps();
     if (!ops)
         return -EAGAIN;
 
-    Q_UNUSED(path);
-    Q_UNUSED(buf);
-    Q_UNUSED(filler);
-    Q_UNUSED(offset);
-    Q_UNUSED(fi);
+    FileInfo info;
+    while (ops->readdir(QLatin1String(path), offset, &info, fi->fh) && !info.name().isEmpty()) {
+        struct stat stbuf;
+        memset(&stbuf, 0, sizeof(stbuf));
+        stbuf.st_ino = info.serialNumber();
+        stbuf.st_mode = info.mode();
+        if (filler(buf, info.name().toAscii().constData(), &stbuf, offset))
+            break;
+    }
+
     return 0;
 }
 

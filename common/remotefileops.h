@@ -26,7 +26,7 @@ public:
     bool release(const QLatin1String& path, qint32 flags, quint64 fh);
     bool fsync(const QLatin1String& path);
     bool opendir(const QLatin1String& path, quint64* fh);
-    bool readdir(const QLatin1String& path, FileInfo*, quint64 fh);
+    bool readdir(const QLatin1String& path, quint64 offset, FileInfo*, quint64 fh);
     bool releasedir(const QLatin1String& path, quint64 fh);
     bool fsyncdir(const QLatin1String& path);
     bool utime(const QLatin1String& path, const QDateTime& acc, const QDateTime& mod);

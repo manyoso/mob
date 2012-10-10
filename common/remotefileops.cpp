@@ -195,12 +195,13 @@ bool RemoteFileOps::opendir(const QLatin1String& path, quint64* fh)
     return true;
 }
 
-bool RemoteFileOps::readdir(const QLatin1String& path, FileInfo* info, quint64 fh)
+bool RemoteFileOps::readdir(const QLatin1String& path, quint64 offset, FileInfo* info, quint64 fh)
 {
 #if DEBUG_REMOTEFILEOPS
     qDebug() << "Remote file readdir" << path;
 #endif
     Q_UNUSED(path);
+    Q_UNUSED(offset);
     Q_UNUSED(info);
     Q_UNUSED(fh);
     return true;

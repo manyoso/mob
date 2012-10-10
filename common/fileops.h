@@ -12,6 +12,7 @@
 
 class FileInfo : public Message {
     Q_OBJECT
+    Q_PROPERTY(QString name READ name WRITE setName STORED true)
     Q_PROPERTY(quint64 serialNumber READ serialNumber WRITE setSerialNumber STORED true)
     Q_PROPERTY(quint16 mode READ mode WRITE setMode STORED true)
     Q_PROPERTY(quint16 numberOfHardLinks READ numberOfHardLinks WRITE setNumberOfHardLinks STORED true)
@@ -35,6 +36,9 @@ public:
         , m_size(0)
         , m_numberOfBlocks(0)
     {}
+
+    QString name() const { return m_name; }
+    void setName(const QString& name) { m_name = name; }
 
     quint64 serialNumber() const { return m_serialNumber; }
     void setSerialNumber(quint64 serialNumber) { m_serialNumber = serialNumber; }
@@ -72,6 +76,7 @@ public:
     static Message* createMessage() { return new FileInfo; }
 
 private:
+    QString     m_name;
     quint64     m_serialNumber;
     quint16     m_mode;
     quint16     m_numberOfHardLinks;
@@ -113,7 +118,7 @@ public:
     virtual bool release(const QLatin1String& path, qint32 flags, quint64 fh = 0) = 0;
     virtual bool fsync(const QLatin1String& path) = 0;
     virtual bool opendir(const QLatin1String& path, quint64* fh = 0) = 0;
-    virtual bool readdir(const QLatin1String& path, FileInfo*, quint64 fh = 0) = 0;
+    virtual bool readdir(const QLatin1String& path, quint64 offset, FileInfo*, quint64 fh = 0) = 0;
     virtual bool releasedir(const QLatin1String& path, quint64 fh = 0) = 0;
     virtual bool fsyncdir(const QLatin1String& path) = 0;
     virtual bool utime(const QLatin1String& path, const QDateTime& acc, const QDateTime& mod) = 0;
