@@ -25,12 +25,17 @@ FileSystem::FileSystem(FileOps* ops)
 
 FileSystem::~FileSystem()
 {
+    stop();
     delete d;
 }
 
 void FileSystem::stop()
 {
-    QThread::exit(0);
+    exit(0);
+    if (!wait(5000)) {
+        terminate();
+        wait();
+    }
 }
 
 void FileSystem::run()
