@@ -8,7 +8,7 @@
 // important to keep efficient as they will be used everywhere.
 const QLatin1String& FileSystem::mountPoint()
 {
-    static QByteArray mount = QDir::tempPath().append(QCoreApplication::applicationName()).toLatin1();
+    static QByteArray mount = QDir::tempPath().append(QDir::separator()).append(QCoreApplication::applicationName()).toLatin1();
     static QLatin1String mountString = QLatin1String(mount.constData());
     return mountString;
 }

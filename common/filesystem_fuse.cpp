@@ -572,7 +572,7 @@ void FileSystem::run()
 
     // First delete the directory if it exists since we want to control the mode explicitly
     if (QFile::exists(mount) && rmdir(mount.toAscii().constData()) != 0) {
-        qDebug() << "ERROR: Could not create mount point for fileystem at" << mount << "because it already exists!";
+        qDebug() << "ERROR: Could not create mount point for filesystem at" << mount << "because it already exists!";
         return;
     }
 
