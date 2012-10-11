@@ -56,7 +56,7 @@ public:
     void setGroupId(quint32 groupId) { m_groupId = groupId; }
 
     qint32 deviceId() const { return m_deviceId; }
-    void setDeviceId(quint32 deviceId) { deviceId = m_deviceId; }
+    void setDeviceId(quint32 deviceId) { m_deviceId = deviceId; }
 
     qint64 size() const { return m_size; }
     void setSize(quint64 size) { m_size = size; }

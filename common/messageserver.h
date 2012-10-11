@@ -18,10 +18,10 @@ public:
     MessageServer(const QNetworkAddressEntry& address, quint16 readPort, quint16 writePort, QObject* parent);
     virtual ~MessageServer();
 
-    //! \brief Returns the read port that this server reads on
+    //! \brief Returns the read port that this server reads on.
     quint16 readPort() const;
 
-    //! \brief Returns the write port that this server writes on
+    //! \brief Returns the write port that this server writes on.
     quint16 writePort() const;
 
     /*!

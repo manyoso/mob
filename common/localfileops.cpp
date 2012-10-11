@@ -243,7 +243,11 @@ bool LocalFileOps::readdir(const QLatin1String& path, quint64 offset, FileInfo* 
     if (!dir)
         m_error = errno;
     else if (info) {
+#if _DIRENT_HAVE_D_NAMLEN
         info->setName(QString::fromAscii(dir->d_name, dir->d_namlen));
+#else
+        info->setName(QString::fromAscii(dir->d_name));
+#endif
         info->setSerialNumber(dir->d_ino);
         info->setMode(dir->d_type << 12);
     }

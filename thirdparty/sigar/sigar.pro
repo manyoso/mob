@@ -16,7 +16,7 @@ SOURCES += \
     sigar_signal.c \
     sigar_util.c
 
-linux-g++ {
+linux-g++* {
     INCLUDEPATH += os/linux
     SOURCES += os/linux/linux_sigar.c
 }

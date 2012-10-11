@@ -1,6 +1,7 @@
 INCLUDEPATH += $$PWD
 
 SOURCES += \
+    $$PWD/filesystem.cpp \
     $$PWD/global.cpp \
     $$PWD/localfileops.cpp \
     $$PWD/message.cpp \
@@ -20,7 +21,7 @@ HEADERS += \
     $$PWD/node.h \
     $$PWD/remotefileops.h
 
-linux-g++ {
+linux-g++* {
     ### For FUSE
     SOURCES += $$PWD/filesystem_fuse.cpp
     DEFINES += "_FILE_OFFSET_BITS=64"
@@ -31,7 +32,7 @@ macx {
     ### For Fuse4X
     SOURCES += $$PWD/filesystem_fuse.cpp
     DEFINES += "_FILE_OFFSET_BITS=64"
-    DEFINES += "_DARWIN_USE_64_BIT_INODE"
+    DEFINES += "_DARWIN_USE_64_BIT_INODE=1"
     QMAKE_LFLAGS += "-L/usr/local/lib -lfuse4x"
 }
 

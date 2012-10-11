@@ -11,7 +11,11 @@ public:
     FileSystem(FileOps* fileOps);
     ~FileSystem();
 
-    static const QString& mountPoint();
+    static const QLatin1String& mountPoint();
+    static const QLatin1String& root();
+    static void setRoot(const QLatin1String& root);
+    //! \brief Returns the root + path and path might or might not be copied.
+    static QByteArray absolutePath(const char* path);
 
 protected:
     virtual void run();

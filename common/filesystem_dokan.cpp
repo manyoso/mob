@@ -28,12 +28,6 @@ FileSystem::~FileSystem()
     delete d;
 }
 
-const QString& FileSystem::mountPoint()
-{
-    static QString mount = QDir::tempPath().append(QCoreApplication::applicationName());
-    return mount;
-}
-
 void FileSystem::stop()
 {
     QThread::exit(0);

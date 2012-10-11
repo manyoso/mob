@@ -34,16 +34,16 @@ public:
     Node(bool isLocal, const QHostAddress& address);
     ~Node();
 
-    //! \brief Returns whether this node is the scheduler
+    //! \brief Returns whether this node is the scheduler.
     bool scheduler() const;
 
-    //! \brief Returns whether this node represents the local node
+    //! \brief Returns whether this node represents the local node.
     bool isLocal() const{ return m_isLocal; }
 
-    //! \brief Returns the host address of this node
+    //! \brief Returns the host address of this node.
     QHostAddress address() const { return m_address; }
 
-    //! \brief Returns the file operations of this node
+    //! \brief Returns the file operations of this node.
     FileOps* fileOperations() const { return m_fileOps; }
 
     void startFileSystem();
