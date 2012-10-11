@@ -9,15 +9,15 @@
 
 struct FileSystemPrivate
 {
-    FileSystemPrivate(RemoteFileOps* ops)
+    FileSystemPrivate(FileOps* ops)
     {
         m_fileOps = ops;
     }
 
-    RemoteFileOps* m_fileOps;
+    FileOps* m_fileOps;
 };
 
-FileSystem::FileSystem(RemoteFileOps* ops)
+FileSystem::FileSystem(FileOps* ops)
     : QThread(0)
     , d(new FileSystemPrivate(ops))
 {

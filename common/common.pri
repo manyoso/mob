@@ -22,6 +22,8 @@ HEADERS += \
     $$PWD/remotefileops.h
 
 linux-g++* {
+    ### For posix file ops
+    SOURCES += $$PWD/localfileops_posix.cpp
     ### For FUSE
     SOURCES += $$PWD/filesystem_fuse.cpp
     DEFINES += "_FILE_OFFSET_BITS=64"
@@ -29,6 +31,8 @@ linux-g++* {
 }
 
 macx {
+    ### For posix file ops
+    SOURCES += $$PWD/localfileops_posix.cpp
     ### For Fuse4X
     SOURCES += $$PWD/filesystem_fuse.cpp
     DEFINES += "_FILE_OFFSET_BITS=64"
@@ -37,6 +41,8 @@ macx {
 }
 
 win32 {
+    ### For win32 file ops
+    SOURCES += $$PWD/localfileops_win32.cpp
     ### For Dokan
     SOURCES += $$PWD/filesystem_dokan.cpp
 }
