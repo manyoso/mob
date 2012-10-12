@@ -12,7 +12,7 @@
 #include <fuse/fuse_lowlevel.h>
 #include <signal.h>
 
-#define DEBUG_FILESYSTEM 0
+#define DEBUG_FILESYSTEM 1
 
 QDebug operator<<(QDebug dbg, struct fuse_file_info* fi)
 {
@@ -23,29 +23,33 @@ QDebug operator<<(QDebug dbg, struct fuse_file_info* fi)
     return dbg.space();
 }
 
-struct FileSystemPrivate
-{
-    FileSystemPrivate(FileOps* ops)
-    {
-        m_fileOps = ops;
-    }
-
-    FileOps* m_fileOps;
-};
-
-static FileOps* fileOps()
+static FileSystem* fileSystem()
 {
     fuse_context* context = fuse_get_context();
     Q_ASSERT(context);
     if (!context)
         return 0;
 
-    return static_cast<FileSystemPrivate*>(context->private_data)->m_fileOps;
+    return static_cast<FileSystem*>(context->private_data);
+}
+
+static FileOps* fileOps()
+{
+    FileSystem* f = fileSystem();
+    Q_ASSERT(f);
+    return f ? f->fileOps() : 0;
+}
+
+static QByteArray absolutePath(const char* path)
+{
+    FileSystem* f = fileSystem();
+    Q_ASSERT(f);
+    return f ? f->absolutePath(path) : QByteArray();
 }
 
 static int fs_getattr(const char* p, struct stat* stbuf)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_getattr for" << path;
@@ -75,7 +79,7 @@ static int fs_getattr(const char* p, struct stat* stbuf)
 
 static int fs_readlink(const char* p, char*, size_t)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_readlink" << path;
@@ -91,7 +95,7 @@ static int fs_readlink(const char* p, char*, size_t)
 
 static int fs_create(const char* p, mode_t mode, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_create" << path << mode << fi;
@@ -109,7 +113,7 @@ static int fs_create(const char* p, mode_t mode, struct fuse_file_info* fi)
 
 static int fs_mkdir(const char* p, mode_t mode)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_mkdir" << path << mode;
@@ -126,7 +130,7 @@ static int fs_mkdir(const char* p, mode_t mode)
 
 static int fs_unlink(const char* p)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_unlink" << path;
@@ -142,7 +146,7 @@ static int fs_unlink(const char* p)
 
 static int fs_rmdir(const char* p)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_rmdir" << path;
@@ -158,8 +162,8 @@ static int fs_rmdir(const char* p)
 
 static int fs_symlink(const char* p1, const char* p2)
 {
-    QByteArray path1 = FileSystem::absolutePath(p1);
-    QByteArray path2 = FileSystem::absolutePath(p2);
+    QByteArray path1 = absolutePath(p1);
+    QByteArray path2 = absolutePath(p2);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_symlink" << path1 << path2;
@@ -176,8 +180,8 @@ static int fs_symlink(const char* p1, const char* p2)
 
 static int fs_rename(const char* p1, const char* p2)
 {
-    QByteArray path1 = FileSystem::absolutePath(p1);
-    QByteArray path2 = FileSystem::absolutePath(p2);
+    QByteArray path1 = absolutePath(p1);
+    QByteArray path2 = absolutePath(p2);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_rename" << path1 << path2;
@@ -194,8 +198,8 @@ static int fs_rename(const char* p1, const char* p2)
 
 static int fs_link(const char* p1, const char* p2)
 {
-    QByteArray path1 = FileSystem::absolutePath(p1);
-    QByteArray path2 = FileSystem::absolutePath(p2);
+    QByteArray path1 = absolutePath(p1);
+    QByteArray path2 = absolutePath(p2);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_link" << path1 << path2;
@@ -212,7 +216,7 @@ static int fs_link(const char* p1, const char* p2)
 
 static int fs_chmod(const char* p, mode_t mode)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_chmod" << path << mode;
@@ -229,7 +233,7 @@ static int fs_chmod(const char* p, mode_t mode)
 
 static int fs_chown(const char* p, uid_t uid, gid_t gid)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_chown" << path << uid << gid;
@@ -247,7 +251,7 @@ static int fs_chown(const char* p, uid_t uid, gid_t gid)
 
 static int fs_truncate(const char* p, off_t offset)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_truncate" << path << offset;
@@ -264,7 +268,7 @@ static int fs_truncate(const char* p, off_t offset)
 
 static int fs_open(const char* p, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_open" << path << fi;
@@ -287,7 +291,7 @@ static int fs_open(const char* p, struct fuse_file_info* fi)
 
 static int fs_read(const char* p, char* buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_read" << path << size << offset << fi;
@@ -309,7 +313,7 @@ static int fs_read(const char* p, char* buf, size_t size, off_t offset, struct f
 
 static int fs_write(const char* p, const char* data, size_t size, off_t offset, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_write" << path << data << size << offset << fi;
@@ -329,7 +333,7 @@ static int fs_write(const char* p, const char* data, size_t size, off_t offset, 
 
 static int fs_flush(const char* p, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_flush" << path << fi;
@@ -346,7 +350,7 @@ static int fs_flush(const char* p, struct fuse_file_info* fi)
 
 static int fs_release(const char* p, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_release" << path << fi;
@@ -367,7 +371,7 @@ static int fs_release(const char* p, struct fuse_file_info* fi)
 
 static int fs_fsync(const char* p, int, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_fsync" << path << fi;
@@ -384,7 +388,7 @@ static int fs_fsync(const char* p, int, struct fuse_file_info* fi)
 
 static int fs_opendir(const char* p, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_opendir" << path << fi;
@@ -407,7 +411,7 @@ static int fs_opendir(const char* p, struct fuse_file_info* fi)
 
 static int fs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_readdir" << path << filler << offset << fi;
@@ -439,7 +443,7 @@ static int fs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t of
 
 static int fs_releasedir(const char* p, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_releasedir" << path << fi;
@@ -456,7 +460,7 @@ static int fs_releasedir(const char* p, struct fuse_file_info* fi)
 
 static int fs_fsyncdir(const char* p, int, struct fuse_file_info* fi)
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_fsyncdir" << path << fi;
@@ -473,7 +477,7 @@ static int fs_fsyncdir(const char* p, int, struct fuse_file_info* fi)
 
 static int fs_utimens(const char* p, const struct timespec tv[2])
 {
-    QByteArray path = FileSystem::absolutePath(p);
+    QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_utimenss" << path << tv;
@@ -511,7 +515,8 @@ static void fs_destroy(void* p)
 
 FileSystem::FileSystem(FileOps* ops)
     : QThread(0)
-    , d(new FileSystemPrivate(ops))
+    , m_fileOps(ops)
+    , m_rootString("")
 {
     // The signal handlers *should not* be called by the main thread
     sigset_t x;
@@ -526,7 +531,6 @@ FileSystem::FileSystem(FileOps* ops)
 FileSystem::~FileSystem()
 {
     stop();
-    delete d;
 }
 
 void FileSystem::stop()
@@ -617,7 +621,7 @@ void FileSystem::run()
     operations.init         = fs_init;
     operations.destroy      = fs_destroy;
 
-    fuse_main(argc, argv, &operations, static_cast<void*>(d));
+    fuse_main(argc, argv, &operations, static_cast<void*>(this));
 
     // Clean up if possible
     rmdir(mount.toAscii().constData());

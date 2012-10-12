@@ -82,20 +82,6 @@ bool RawData::deserialize(QIODevice* device)
     return true;
 }
 
-struct TestMessagePrivate {
-};
-
-void TestMessage::initTestCase()
-{
-    d = new TestMessagePrivate;
-}
-
-void TestMessage::cleanupTestCase()
-{
-    delete d;
-    d = 0;
-}
-
 void TestMessage::testSendMessage()
 {
     Peer peer1(1111, 2222);

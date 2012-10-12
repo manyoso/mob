@@ -7,26 +7,16 @@
 
 #define DEBUG_FILESYSTEM 0
 
-struct FileSystemPrivate
-{
-    FileSystemPrivate(FileOps* ops)
-    {
-        m_fileOps = ops;
-    }
-
-    FileOps* m_fileOps;
-};
-
 FileSystem::FileSystem(FileOps* ops)
     : QThread(0)
-    , d(new FileSystemPrivate(ops))
+    , m_fileOps(ops)
+    , m_rootString("")
 {
 }
 
 FileSystem::~FileSystem()
 {
     stop();
-    delete d;
 }
 
 void FileSystem::stop()

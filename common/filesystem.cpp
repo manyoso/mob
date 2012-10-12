@@ -6,31 +6,29 @@
 // Store and wrap the constructed mountPoint string and root string as light weight
 // as possible by using QByteArray and QLatin1String.  These are going to be very
 // important to keep efficient as they will be used everywhere.
-const QLatin1String& FileSystem::mountPoint()
+const QLatin1String& FileSystem::mountPoint() const
 {
     static QByteArray mount = QDir::tempPath().append(QDir::separator()).append(QCoreApplication::applicationName()).toLatin1();
     static QLatin1String mountString = QLatin1String(mount.constData());
     return mountString;
 }
 
-static QByteArray* s_root = new QByteArray("");
-static QLatin1String* s_rootString = new QLatin1String(s_root->constData());
-const QLatin1String& FileSystem::root()
+const QLatin1String& FileSystem::root() const
 {
-    return *s_rootString;
+    return m_rootString;
 }
 
 void FileSystem::setRoot(const QLatin1String& root)
 {
-    *s_root = QByteArray(root.latin1());
-    *s_rootString = QLatin1String(s_root->constData());
+    m_root = QByteArray(root.latin1());
+    m_rootString = QLatin1String(m_root.constData());
 }
 
-QByteArray FileSystem::absolutePath(const char* path)
+QByteArray FileSystem::absolutePath(const char* path) const
 {
     QByteArray p = QByteArray::fromRawData(path, qstrlen(path));
-    if (s_root->isEmpty())
+    if (m_root.isEmpty())
         return p;
     else
-        return *s_root + p;
+        return m_root + p;
 }
