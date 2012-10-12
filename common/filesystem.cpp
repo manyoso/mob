@@ -32,3 +32,14 @@ QByteArray FileSystem::absolutePath(const char* path) const
     else
         return m_root + p;
 }
+
+void FileSystem::startFileSystem()
+{
+    QMutexLocker locker(&m_mutex);
+    start();
+    if (!m_started) {
+        bool rc = m_waitCondition.wait(&m_mutex);
+        Q_ASSERT(rc);
+    }
+    Q_ASSERT(m_started);
+}

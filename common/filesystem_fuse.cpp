@@ -14,6 +14,23 @@
 
 #define DEBUG_FILESYSTEM 1
 
+class FileSystemPrivate {
+public:
+    FileSystemPrivate(FileSystem* f) : m_f(f) {}
+    FileSystem* fileSystem() const { return m_f; }
+
+    void wake()
+    {
+        m_f->m_mutex.lock();
+        m_f->m_started = true;
+        m_f->m_waitCondition.wakeAll();
+        m_f->m_mutex.unlock();
+    }
+
+private:
+    FileSystem* m_f;
+};
+
 QDebug operator<<(QDebug dbg, struct fuse_file_info* fi)
 {
     if (!fi)
@@ -23,14 +40,21 @@ QDebug operator<<(QDebug dbg, struct fuse_file_info* fi)
     return dbg.space();
 }
 
-static FileSystem* fileSystem()
+static FileSystemPrivate* fileSystemPrivate()
 {
     fuse_context* context = fuse_get_context();
     Q_ASSERT(context);
     if (!context)
         return 0;
 
-    return static_cast<FileSystem*>(context->private_data);
+    return static_cast<FileSystemPrivate*>(context->private_data);
+}
+
+static FileSystem* fileSystem()
+{
+    FileSystemPrivate* f = fileSystemPrivate();
+    Q_ASSERT(f);
+    return f ? f->fileSystem() : 0;
 }
 
 static FileOps* fileOps()
@@ -501,6 +525,13 @@ static void* fs_init(struct fuse_conn_info* conn)
 #endif
     fuse_context* context = fuse_get_context();
     s_fuse = context->fuse;
+
+    // Signal that we've started
+    FileSystemPrivate* f = static_cast<FileSystemPrivate*>(context->private_data);
+    Q_ASSERT(f);
+    if (f)
+        f->wake();
+
     return context->private_data;
 }
 
@@ -517,6 +548,8 @@ FileSystem::FileSystem(FileOps* ops)
     : QThread(0)
     , m_fileOps(ops)
     , m_rootString("")
+    , m_started(false)
+    , d(new FileSystemPrivate(this))
 {
     // The signal handlers *should not* be called by the main thread
     sigset_t x;
@@ -531,6 +564,8 @@ FileSystem::FileSystem(FileOps* ops)
 FileSystem::~FileSystem()
 {
     stop();
+    delete d;
+    d = 0;
 }
 
 void FileSystem::stop()
@@ -621,7 +656,7 @@ void FileSystem::run()
     operations.init         = fs_init;
     operations.destroy      = fs_destroy;
 
-    fuse_main(argc, argv, &operations, static_cast<void*>(this));
+    fuse_main(argc, argv, &operations, static_cast<void*>(d));
 
     // Clean up if possible
     rmdir(mount.toAscii().constData());

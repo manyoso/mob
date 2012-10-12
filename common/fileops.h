@@ -94,7 +94,7 @@ INSTALL_MESSAGE_FACTORY(FileInfo, &FileInfo::createMessage);
 
 class FileOps {
 public:
-    FileOps(const QHostAddress& address) : m_address(address) {}
+    FileOps(const QHostAddress& address) : m_address(address), m_error(0) {}
     virtual ~FileOps() {}
 
     QHostAddress address() const { return m_address; }

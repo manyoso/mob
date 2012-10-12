@@ -11,12 +11,16 @@ FileSystem::FileSystem(FileOps* ops)
     : QThread(0)
     , m_fileOps(ops)
     , m_rootString("")
+    , m_started(false)
+    , d(new FileSystemPrivate(this))
 {
 }
 
 FileSystem::~FileSystem()
 {
     stop();
+    delete d;
+    d = 0;
 }
 
 void FileSystem::stop()
@@ -30,5 +34,10 @@ void FileSystem::stop()
 
 void FileSystem::run()
 {
+    m_mutex.lock();
+    m_started = true;
+    m_waitCondition.wakeAll();
+    m_mutex.unlock();
+
     exec();
 }

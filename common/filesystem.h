@@ -2,8 +2,10 @@
 #define filesystem_h
 
 #include <QtCore/QByteArray>
+#include <QtCore/QMutex>
 #include <QtCore/QString>
 #include <QtCore/QThread>
+#include <QtCore/QWaitCondition>
 
 class FileSystemPrivate;
 class FileOps;
@@ -28,6 +30,9 @@ public:
     //! \brief Returns the root + path where path might or might not be deep copied.
     QByteArray absolutePath(const char* path) const;
 
+    //! \brief Starts the filesystem and blocks the calling thread until it is running and mounted.
+    void startFileSystem();
+
 protected:
     virtual void run();
 
@@ -36,6 +41,11 @@ private:
     FileOps* m_fileOps;
     QByteArray m_root;
     QLatin1String m_rootString;
+    bool m_started;
+    QMutex m_mutex;
+    QWaitCondition m_waitCondition;
+    friend class FileSystemPrivate;
+    FileSystemPrivate* d;
 };
 
 #endif // filesystem_h
