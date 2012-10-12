@@ -101,7 +101,7 @@ public:
 
     virtual bool getattr(const QLatin1String& path, FileInfo*) = 0;
     virtual bool readlink(const QLatin1String& path, QTextStream& buffer) = 0;
-    virtual bool create(const QLatin1String& path, QFile::Permissions) = 0;
+    virtual bool create(const QLatin1String& path, QFile::Permissions, qint32 flags, quint64* fh = 0) = 0;
     virtual bool mkdir(const QLatin1String& path, QFile::Permissions) = 0;
     virtual bool unlink(const QLatin1String& path) = 0;
     virtual bool rmdir(const QLatin1String& path) = 0;

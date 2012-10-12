@@ -9,17 +9,7 @@ bool LocalFileOps::readlink(const QLatin1String& path, QTextStream& buffer)
 #endif
     Q_UNUSED(path);
     Q_UNUSED(buffer);
-    return true;
-}
-
-bool LocalFileOps::create(const QLatin1String& path, QFile::Permissions perm)
-{
-#if DEBUG_LOCALFILEOPS
-    qDebug() << "Local file create" << path << perm;
-#endif
-    Q_UNUSED(path);
-    Q_UNUSED(perm);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::mkdir(const QLatin1String& path, QFile::Permissions perm)
@@ -29,16 +19,7 @@ bool LocalFileOps::mkdir(const QLatin1String& path, QFile::Permissions perm)
 #endif
     Q_UNUSED(path);
     Q_UNUSED(perm);
-    return true;
-}
-
-bool LocalFileOps::unlink(const QLatin1String& path)
-{
-#if DEBUG_LOCALFILEOPS
-    qDebug() << "Local file unlink" << path;
-#endif
-    Q_UNUSED(path);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::rmdir(const QLatin1String& path)
@@ -47,7 +28,7 @@ bool LocalFileOps::rmdir(const QLatin1String& path)
     qDebug() << "Local file rmdir" << path;
 #endif
     Q_UNUSED(path);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::symlink(const QLatin1String& path1, const QLatin1String& path2)
@@ -57,7 +38,7 @@ bool LocalFileOps::symlink(const QLatin1String& path1, const QLatin1String& path
 #endif
     Q_UNUSED(path1);
     Q_UNUSED(path2);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::rename(const QLatin1String& path1, const QLatin1String& path2)
@@ -67,7 +48,7 @@ bool LocalFileOps::rename(const QLatin1String& path1, const QLatin1String& path2
 #endif
     Q_UNUSED(path1);
     Q_UNUSED(path2);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::link(const QLatin1String& path1, const QLatin1String& path2)
@@ -77,7 +58,7 @@ bool LocalFileOps::link(const QLatin1String& path1, const QLatin1String& path2)
 #endif
     Q_UNUSED(path1);
     Q_UNUSED(path2);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::chmod(const QLatin1String& path, QFile::Permissions perm)
@@ -87,7 +68,7 @@ bool LocalFileOps::chmod(const QLatin1String& path, QFile::Permissions perm)
 #endif
     Q_UNUSED(path);
     Q_UNUSED(perm);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::chown(const QLatin1String& path, quint32 uid, quint32 gid)
@@ -98,7 +79,7 @@ bool LocalFileOps::chown(const QLatin1String& path, quint32 uid, quint32 gid)
     Q_UNUSED(path);
     Q_UNUSED(uid);
     Q_UNUSED(gid);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::truncate(const QLatin1String& path, qint64 size)
@@ -108,7 +89,7 @@ bool LocalFileOps::truncate(const QLatin1String& path, qint64 size)
 #endif
     Q_UNUSED(path);
     Q_UNUSED(size);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::write(const QLatin1String& path, const QByteArray &data, qint64 offset)
@@ -119,7 +100,7 @@ bool LocalFileOps::write(const QLatin1String& path, const QByteArray &data, qint
     Q_UNUSED(path);
     Q_UNUSED(data);
     Q_UNUSED(offset);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::flush(const QLatin1String& path)
@@ -128,7 +109,7 @@ bool LocalFileOps::flush(const QLatin1String& path)
     qDebug() << "Local file flush" << path;
 #endif
     Q_UNUSED(path);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::fsync(const QLatin1String& path)
@@ -137,7 +118,7 @@ bool LocalFileOps::fsync(const QLatin1String& path)
     qDebug() << "Local file fsync" << path;
 #endif
     Q_UNUSED(path);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::fsyncdir(const QLatin1String& path)
@@ -146,7 +127,7 @@ bool LocalFileOps::fsyncdir(const QLatin1String& path)
     qDebug() << "Local file fsyncdir" << path;
 #endif
     Q_UNUSED(path);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::utime(const QLatin1String& path, const QDateTime& acc, const QDateTime& mod)
@@ -157,5 +138,5 @@ bool LocalFileOps::utime(const QLatin1String& path, const QDateTime& acc, const 
     Q_UNUSED(path);
     Q_UNUSED(acc);
     Q_UNUSED(mod);
-    return true;
+    return false;
 }

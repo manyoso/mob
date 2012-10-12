@@ -35,6 +35,50 @@ bool LocalFileOps::getattr(const QLatin1String& path, FileInfo* info)
     return rc == 0;
 }
 
+static mode_t permissionsToMode(QFile::Permissions p)
+{
+    mode_t m = 0;
+    if (p & QFile::ReadOwner)   m |= S_IRUSR;
+    if (p & QFile::WriteOwner)  m |= S_IWUSR;
+    if (p & QFile::ExeOwner)    m |= S_IXUSR;
+    if (p & QFile::ReadUser)    m |= S_IRUSR;
+    if (p & QFile::WriteUser)   m |= S_IWUSR;
+    if (p & QFile::ExeUser)     m |= S_IXUSR;
+    if (p & QFile::ReadGroup)   m |= S_IRGRP;
+    if (p & QFile::WriteGroup)  m |= S_IWGRP;
+    if (p & QFile::ExeGroup)    m |= S_IXGRP;
+    if (p & QFile::ReadOther)   m |= S_IROTH;
+    if (p & QFile::WriteOther)  m |= S_IWOTH;
+    if (p & QFile::ExeOther)    m |= S_IXOTH;
+    return m;
+}
+
+bool LocalFileOps::create(const QLatin1String& path, QFile::Permissions perm, qint32 flags, quint64* fh)
+{
+#if DEBUG_LOCALFILEOPS
+    qDebug() << "Local file create" << path << perm;
+#endif
+
+    int rc = ::open(path.latin1(), O_CREAT | flags, permissionsToMode(perm));
+    if (rc == -1)
+        m_error = errno;
+    else if (fh)
+        *fh = rc;
+    return rc > 0;
+}
+
+bool LocalFileOps::unlink(const QLatin1String& path)
+{
+#if DEBUG_LOCALFILEOPS
+    qDebug() << "Local file unlink" << path;
+#endif
+
+    int rc = ::unlink(path.latin1());
+    if (rc != 0)
+        m_error = errno;
+    return rc == 0;
+}
+
 bool LocalFileOps::open(const QLatin1String& path, qint32 flags, quint64* fh)
 {
 #if DEBUG_LOCALFILEOPS
@@ -74,7 +118,7 @@ bool LocalFileOps::release(const QLatin1String& path, qint32 flags, quint64 fh)
 #endif
 
     int rc = ::close(fh);
-    if (rc == -1)
+    if (rc != 0)
         m_error = errno;
     return rc == 0;
 }

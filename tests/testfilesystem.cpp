@@ -31,16 +31,22 @@ void TestFileSystem::testLocalFileOps()
     QCOMPARE(files.count(), 2);
 
     // The '.' entry
-    QFileInfo file = files.at(0);
-    QVERIFY(file.exists());
-    QCOMPARE(file.fileName(), QLatin1String("."));
+    QFileInfo fileInfo = files.at(0);
+    QVERIFY(fileInfo.exists());
+    QCOMPARE(fileInfo.fileName(), QLatin1String("."));
 
     // The '..' entry
-    file = files.at(1);
-    QVERIFY(file.exists());
-    QCOMPARE(file.fileName(), QLatin1String(".."));
+    fileInfo = files.at(1);
+    QVERIFY(fileInfo.exists());
+    QCOMPARE(fileInfo.fileName(), QLatin1String(".."));
 
-    // Test file creation
+    // Test file creation and deletion
+    QFile file(mount.canonicalPath().append(QDir::separator()).append("foo"));
+    QVERIFY(!file.exists());
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    QVERIFY(file.exists());
+    file.close();
+    file.remove();
 
     // Test directory creation
 

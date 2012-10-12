@@ -9,7 +9,28 @@ bool LocalFileOps::getattr(const QLatin1String& path, FileInfo* info)
 #endif
     Q_UNUSED(path);
     Q_UNUSED(info);
-    return true;
+    return false;
+}
+
+bool LocalFileOps::create(const QLatin1String& path, QFile::Permissions perm, qint32 flags, quint64* fh)
+{
+#if DEBUG_LOCALFILEOPS
+    qDebug() << "Local file create" << path << perm;
+#endif
+    Q_UNUSED(path);
+    Q_UNUSED(perm);
+    Q_UNUSED(flags);
+    Q_UNUSED(fh);
+    return false;
+}
+
+bool LocalFileOps::unlink(const QLatin1String& path)
+{
+#if DEBUG_LOCALFILEOPS
+    qDebug() << "Local file unlink" << path;
+#endif
+    Q_UNUSED(path);
+    return false;
 }
 
 bool LocalFileOps::open(const QLatin1String& path, qint32 flags, quint64* fh)
@@ -20,7 +41,7 @@ bool LocalFileOps::open(const QLatin1String& path, qint32 flags, quint64* fh)
     Q_UNUSED(path);
     Q_UNUSED(flags);
     Q_UNUSED(fh);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::read(const QLatin1String& path, QByteArray *buffer, qint64 size, qint64 offset, quint64 fh)
@@ -33,7 +54,7 @@ bool LocalFileOps::read(const QLatin1String& path, QByteArray *buffer, qint64 si
     Q_UNUSED(size);
     Q_UNUSED(offset);
     Q_UNUSED(fh);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::release(const QLatin1String& path, qint32 flags, quint64 fh)
@@ -44,7 +65,7 @@ bool LocalFileOps::release(const QLatin1String& path, qint32 flags, quint64 fh)
     Q_UNUSED(path);
     Q_UNUSED(flags);
     Q_UNUSED(fh);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::opendir(const QLatin1String& path, quint64* fh)
@@ -54,7 +75,7 @@ bool LocalFileOps::opendir(const QLatin1String& path, quint64* fh)
 #endif
     Q_UNUSED(path);
     Q_UNUSED(fh);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::readdir(const QLatin1String& path, quint64 offset, FileInfo* info, quint64 fh)
@@ -66,7 +87,7 @@ bool LocalFileOps::readdir(const QLatin1String& path, quint64 offset, FileInfo* 
     Q_UNUSED(offset);
     Q_UNUSED(info);
     Q_UNUSED(fh);
-    return true;
+    return false;
 }
 
 bool LocalFileOps::releasedir(const QLatin1String& path, quint64 fh)
@@ -76,5 +97,5 @@ bool LocalFileOps::releasedir(const QLatin1String& path, quint64 fh)
 #endif
     Q_UNUSED(path);
     Q_UNUSED(fh);
-    return true;
+    return false;
 }

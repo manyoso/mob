@@ -22,13 +22,15 @@ bool RemoteFileOps::readlink(const QLatin1String& path, QTextStream& buffer)
     return true;
 }
 
-bool RemoteFileOps::create(const QLatin1String& path, QFile::Permissions perm)
+bool RemoteFileOps::create(const QLatin1String& path, QFile::Permissions perm, qint32 flags, quint64* fh)
 {
 #if DEBUG_REMOTEFILEOPS
     qDebug() << "Remote file create" << path << perm;
 #endif
     Q_UNUSED(path);
     Q_UNUSED(perm);
+    Q_UNUSED(flags);
+    Q_UNUSED(fh);
     return true;
 }
 

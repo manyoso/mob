@@ -9,7 +9,7 @@ public:
 
     bool getattr(const QLatin1String& path, FileInfo*);
     bool readlink(const QLatin1String& path, QTextStream& buffer);
-    bool create(const QLatin1String& path, QFile::Permissions);
+    bool create(const QLatin1String& path, QFile::Permissions, qint32 flags, quint64* fh = 0);
     bool mkdir(const QLatin1String& path, QFile::Permissions);
     bool unlink(const QLatin1String& path);
     bool rmdir(const QLatin1String& path);

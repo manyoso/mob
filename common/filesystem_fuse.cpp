@@ -12,7 +12,7 @@
 #include <fuse/fuse_lowlevel.h>
 #include <signal.h>
 
-#define DEBUG_FILESYSTEM 1
+#define DEBUG_FILESYSTEM 0
 
 class FileSystemPrivate {
 public:
@@ -114,30 +114,71 @@ static int fs_readlink(const char* p, char*, size_t)
         return -EAGAIN;
 
     Q_UNUSED(path);
-    return 0;
+    return -EAGAIN;
 }
 
-static int fs_create(const char* p, mode_t mode, struct fuse_file_info* fi)
+#if 0
+static mode_t permissionsToMode(QFile::Permissions p)
+{
+    mode_t m = 0;
+    if (p & QFile::ReadOwner)   m |= S_IRUSR;
+    if (p & QFile::WriteOwner)  m |= S_IWUSR;
+    if (p & QFile::ExeOwner)    m |= S_IXUSR;
+    if (p & QFile::ReadUser)    m |= S_IRUSR;
+    if (p & QFile::WriteUser)   m |= S_IWUSR;
+    if (p & QFile::ExeUser)     m |= S_IXUSR;
+    if (p & QFile::ReadGroup)   m |= S_IRGRP;
+    if (p & QFile::WriteGroup)  m |= S_IWGRP;
+    if (p & QFile::ExeGroup)    m |= S_IXGRP;
+    if (p & QFile::ReadOther)   m |= S_IROTH;
+    if (p & QFile::WriteOther)  m |= S_IWOTH;
+    if (p & QFile::ExeOther)    m |= S_IXOTH;
+    return m;
+}
+#endif
+
+static QFile::Permissions modeToPermissions(mode_t m)
+{
+    QFile::Permissions p = 0;
+    if (m & S_IRUSR)    p |= QFile::ReadOwner;
+    if (m & S_IWUSR)    p |= QFile::WriteOwner;
+    if (m & S_IXUSR)    p |= QFile::ExeOwner;
+    if (m & S_IRUSR)    p |= QFile::ReadUser;
+    if (m & S_IWUSR)    p |= QFile::WriteUser;
+    if (m & S_IXUSR)    p |= QFile::ExeUser;
+    if (m & S_IRGRP)    p |= QFile::ReadGroup;
+    if (m & S_IWGRP)    p |= QFile::WriteGroup;
+    if (m & S_IXGRP)    p |= QFile::ExeGroup;
+    if (m & S_IROTH)    p |= QFile::ReadOther;
+    if (m & S_IWOTH)    p |= QFile::WriteOther;
+    if (m & S_IXOTH)    p |= QFile::ExeOther;
+    return p;
+}
+
+static int fs_create(const char* p, mode_t m, struct fuse_file_info* fi)
 {
     QByteArray path = absolutePath(p);
+    QFile::Permissions mode = modeToPermissions(m);
 
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_create" << path << mode << fi;
+    qDebug() << "fs_create" << path << mode << fi->flags;
 #endif
 
     FileOps* ops = fileOps();
     if (!ops)
         return -EAGAIN;
 
-    Q_UNUSED(path);
-    Q_UNUSED(mode);
-    Q_UNUSED(fi);
+    quint64 fh;
+    if (!ops->create(QLatin1String(path), mode, fi->flags, &fh))
+        return ops->error();
+    fi->fh = fh;
     return 0;
 }
 
-static int fs_mkdir(const char* p, mode_t mode)
+static int fs_mkdir(const char* p, mode_t m)
 {
     QByteArray path = absolutePath(p);
+    QFile::Permissions mode = modeToPermissions(m);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_mkdir" << path << mode;
@@ -149,7 +190,7 @@ static int fs_mkdir(const char* p, mode_t mode)
 
     Q_UNUSED(path);
     Q_UNUSED(mode);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_unlink(const char* p)
@@ -164,7 +205,8 @@ static int fs_unlink(const char* p)
     if (!ops)
         return -EAGAIN;
 
-    Q_UNUSED(path);
+    if (!ops->unlink(QLatin1String(path)))
+        return ops->error();
     return 0;
 }
 
@@ -181,7 +223,7 @@ static int fs_rmdir(const char* p)
         return -EAGAIN;
 
     Q_UNUSED(path);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_symlink(const char* p1, const char* p2)
@@ -199,7 +241,7 @@ static int fs_symlink(const char* p1, const char* p2)
 
     Q_UNUSED(path1);
     Q_UNUSED(path2);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_rename(const char* p1, const char* p2)
@@ -217,7 +259,7 @@ static int fs_rename(const char* p1, const char* p2)
 
     Q_UNUSED(path1);
     Q_UNUSED(path2);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_link(const char* p1, const char* p2)
@@ -235,12 +277,13 @@ static int fs_link(const char* p1, const char* p2)
 
     Q_UNUSED(path1);
     Q_UNUSED(path2);
-    return 0;
+    return -EAGAIN;
 }
 
-static int fs_chmod(const char* p, mode_t mode)
+static int fs_chmod(const char* p, mode_t m)
 {
     QByteArray path = absolutePath(p);
+    QFile::Permissions mode = modeToPermissions(m);
 
 #if DEBUG_FILESYSTEM
     qDebug() << "fs_chmod" << path << mode;
@@ -252,7 +295,7 @@ static int fs_chmod(const char* p, mode_t mode)
 
     Q_UNUSED(path);
     Q_UNUSED(mode);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_chown(const char* p, uid_t uid, gid_t gid)
@@ -270,7 +313,7 @@ static int fs_chown(const char* p, uid_t uid, gid_t gid)
     Q_UNUSED(path);
     Q_UNUSED(uid);
     Q_UNUSED(gid);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_truncate(const char* p, off_t offset)
@@ -287,7 +330,7 @@ static int fs_truncate(const char* p, off_t offset)
 
     Q_UNUSED(path);
     Q_UNUSED(offset);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_open(const char* p, struct fuse_file_info* fi)
@@ -295,7 +338,7 @@ static int fs_open(const char* p, struct fuse_file_info* fi)
     QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_open" << path << fi;
+    qDebug() << "fs_open" << path << fi->flags;
 #endif
 
     Q_ASSERT(fi);
@@ -352,7 +395,7 @@ static int fs_write(const char* p, const char* data, size_t size, off_t offset, 
     Q_UNUSED(size);
     Q_UNUSED(offset);
     Q_UNUSED(fi);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_flush(const char* p, struct fuse_file_info* fi)
@@ -407,7 +450,7 @@ static int fs_fsync(const char* p, int, struct fuse_file_info* fi)
 
     Q_UNUSED(path);
     Q_UNUSED(fi);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_opendir(const char* p, struct fuse_file_info* fi)
@@ -415,7 +458,7 @@ static int fs_opendir(const char* p, struct fuse_file_info* fi)
     QByteArray path = absolutePath(p);
 
 #if DEBUG_FILESYSTEM
-    qDebug() << "fs_opendir" << path << fi;
+    qDebug() << "fs_opendir" << path;
 #endif
 
     Q_ASSERT(fi);
@@ -496,7 +539,7 @@ static int fs_fsyncdir(const char* p, int, struct fuse_file_info* fi)
 
     Q_UNUSED(path);
     Q_UNUSED(fi);
-    return 0;
+    return -EAGAIN;
 }
 
 static int fs_utimens(const char* p, const struct timespec tv[2])
@@ -513,7 +556,7 @@ static int fs_utimens(const char* p, const struct timespec tv[2])
 
     Q_UNUSED(path);
     Q_UNUSED(tv);
-    return 0;
+    return -EAGAIN;
 }
 
 static struct fuse* s_fuse = 0;
